@@ -17,7 +17,7 @@ async function apiFetch(url, options = {}) {
 }
 
 export async function fetchVCub() {
-  const url = `${DATAHUB_BASE}/sv_vcub_p/records?limit=200&apikey=${DATAHUB_KEY}`
+  const url = `${DATAHUB_BASE}/ci_vcub_p/records?limit=200&apikey=${DATAHUB_KEY}`
   const data = await apiFetch(url)
   return data.results
 }
@@ -30,13 +30,13 @@ export async function fetchTBMStops() {
 
 export async function fetchTBMVehicles() {
   // Positions véhicules TBM temps réel
-  const url = `${DATAHUB_BASE}/sv_vehicule_p/records?limit=500&apikey=${DATAHUB_KEY}`
+  const url = `${DATAHUB_BASE}/sv_vehic_p/records?limit=500&apikey=${DATAHUB_KEY}`
   const data = await apiFetch(url)
   return data.results
 }
 
 export async function fetchTrafficLights() {
-  const url = `${DATAHUB_BASE}/ci_feux_p/records?limit=2000&apikey=${DATAHUB_KEY}`
+  const url = `${DATAHUB_BASE}/pc_carf_p/records?limit=2000&apikey=${DATAHUB_KEY}`
   const data = await apiFetch(url)
   return data.results
 }

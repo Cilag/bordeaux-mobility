@@ -32,7 +32,7 @@ describe('fetchVCub', () => {
     const result = await fetchVCub()
 
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('sv_vcub_p'),
+      expect.stringContaining('ci_vcub_p'),
       expect.any(Object)
     )
     expect(result).toEqual(mockData.results)
@@ -83,7 +83,7 @@ describe('fetchTBMVehicles', () => {
     const result = await fetchTBMVehicles()
 
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('sv_vehicule_p'),
+      expect.stringContaining('sv_vehic_p'),
       expect.any(Object)
     )
     expect(result).toEqual(mockData.results)
@@ -106,7 +106,7 @@ describe('fetchTrafficLights', () => {
     const result = await fetchTrafficLights()
 
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('ci_feux_p'),
+      expect.stringContaining('pc_carf_p'),
       expect.any(Object)
     )
     expect(result).toEqual(mockData.results)
