@@ -6,10 +6,14 @@ const SNCF_KEY = import.meta.env.VITE_SNCF_API_KEY
 const TOMTOM_KEY = import.meta.env.VITE_TOMTOM_API_KEY
 const DATAHUB_BASE = 'https://datahub.bordeaux-metropole.fr/api/explore/v2.1/catalog/datasets'
 
-async function apiFetch(url) {
-  const res = await fetch(url)
+async function apiFetch(url, options = {}) {
+  const res = await fetch(url, options)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  try {
+    return await res.json()
+  } catch (err) {
+    throw new Error(`Failed to parse JSON response: ${err.message}`)
+  }
 }
 
 export async function fetchVCub() {
@@ -39,11 +43,9 @@ export async function fetchTrafficLights() {
 
 export async function fetchSNCF() {
   const url = 'https://api.sncf.com/v1/coverage/sncf/stop_areas/stop_area:SNCF:87581009/departures?count=20'
-  const res = await fetch(url, {
+  const data = await apiFetch(url, {
     headers: { Authorization: `Basic ${btoa(SNCF_KEY + ':')}` },
   })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const data = await res.json()
   return data.departures ?? []
 }
 
