@@ -1,5 +1,5 @@
 // src/components/Map/layers/TramBusLayer.jsx
-import { Marker, Popup } from 'react-leaflet'
+import { Marker, CircleMarker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 
 const TRAM_COLOR = '#009EE3'
@@ -20,24 +20,50 @@ const busIcon = makeIcon(BUS_COLOR, '🚌')
 export default function TramBusLayer({ vehicles, stops, type }) {
   const color = type === 'tram' ? TRAM_COLOR : BUS_COLOR
   const icon = type === 'tram' ? tramIcon : busIcon
+  // Le champ réel de l'API DataHub est "vehicule" (valeur "TRAM" ou "BUS")
   const keyword = type === 'tram' ? 'TRAM' : 'BUS'
 
-  const filtered = vehicles.filter((v) =>
-    (v.type ?? v.mode ?? v.ligne ?? '').toString().toUpperCase().includes(keyword)
+  const filteredVehicles = vehicles.filter((v) =>
+    (v.vehicule ?? '').toString().toUpperCase() === keyword
+  )
+
+  const filteredStops = stops.filter((s) =>
+    (s.vehicule ?? '').toString().toUpperCase() === keyword
   )
 
   return (
     <>
-      {filtered.map((v, i) => {
-        const lat = v.latitude ?? v.lat ?? v.geo_point_2d?.lat
-        const lng = v.longitude ?? v.lon ?? v.geo_point_2d?.lon
+      {/* Arrêts — petits cercles */}
+      {filteredStops.map((s, i) => {
+        const lat = s.geo_point_2d?.lat
+        const lng = s.geo_point_2d?.lon
         if (!lat || !lng) return null
         return (
-          <Marker key={v.id ?? i} position={[lat, lng]} icon={icon}>
+          <CircleMarker
+            key={`stop-${i}`}
+            center={[lat, lng]}
+            radius={5}
+            pathOptions={{ color, fillColor: color, fillOpacity: 0.6, weight: 1 }}
+          >
             <Popup>
-              <strong style={{ color }}>Ligne {v.ligne ?? v.route ?? '?'}</strong><br />
-              {v.direction ?? v.destination ?? ''}<br />
-              {v.prochain_passage && <span>Prochain : {v.prochain_passage}</span>}
+              <strong style={{ color }}>{s.libelle ?? '?'}</strong><br />
+              {s.vehicule}
+            </Popup>
+          </CircleMarker>
+        )
+      })}
+
+      {/* Véhicules en temps réel — icônes */}
+      {filteredVehicles.map((v, i) => {
+        const lat = v.geo_point_2d?.lat
+        const lng = v.geo_point_2d?.lon
+        if (!lat || !lng) return null
+        return (
+          <Marker key={`veh-${i}`} position={[lat, lng]} icon={icon}>
+            <Popup>
+              <strong style={{ color }}>Ligne {v.rs_sv_ligne_a ?? '?'}</strong><br />
+              {v.terminus ?? ''}<br />
+              {v.etat && <span style={{ fontSize: 11, color: '#888' }}>{v.etat}</span>}
             </Popup>
           </Marker>
         )

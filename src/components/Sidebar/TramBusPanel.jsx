@@ -20,7 +20,7 @@ export default function TramBusPanel({ stops, userPosition }) {
       <div className="panel-body">
         {sorted.map((s, i) => (
           <div key={i} className="panel-row">
-            <span>{s.nomarret ?? s.nom ?? '?'}</span>
+            <span>{s.libelle ?? '?'}</span>
             <span style={{ color: '#888' }}>
               {s._dist < Infinity ? `${(s._dist * 1000).toFixed(0)} m` : ''}
             </span>
