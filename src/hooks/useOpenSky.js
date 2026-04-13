@@ -26,10 +26,11 @@ export function useOpenSky() {
   async function load() {
     try {
       const states = await fetchOpenSky()
-      const airborne = states
+      // Inclure avions au sol pour voir l'aéroport de Bordeaux-Mérignac
+      const aircraft = states
         .map(parseState)
-        .filter((f) => !f.onGround && f.lat != null && f.lng != null)
-      setFlights(airborne)
+        .filter((f) => f.lat != null && f.lng != null)
+      setFlights(aircraft)
       setLastUpdate(new Date())
       setError(null)
     } catch (e) {

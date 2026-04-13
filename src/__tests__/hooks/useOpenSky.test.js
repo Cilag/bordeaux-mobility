@@ -31,15 +31,16 @@ describe('useOpenSky', () => {
     })
   })
 
-  it('filters out on-ground aircraft', async () => {
+  it('includes on-ground aircraft to show airport activity', async () => {
+    // On-ground planes are included intentionally (airport de Bordeaux-Mérignac)
     const mockStates = [
-      ['xyz', 'EZY001  ', 'UK', 1713000000, 1713000000, -0.5, 44.8, 0, true, 0, 0, 0],
+      ['xyz', 'EZY001  ', 'UK', 1713000000, 1713000000, -0.715, 44.828, 0, true, 0, 0, 0],
     ]
     api.fetchOpenSky.mockResolvedValue(mockStates)
 
     const { result } = renderHook(() => useOpenSky())
 
     await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(result.current.flights).toHaveLength(0)
+    expect(result.current.flights).toHaveLength(1)
   })
 })

@@ -23,12 +23,13 @@ export default function TramBusLayer({ vehicles, stops, type }) {
   // Le champ réel de l'API DataHub est "vehicule" (valeur "TRAM" ou "BUS")
   const keyword = type === 'tram' ? 'TRAM' : 'BUS'
 
+  // "TRAM_LONG", "TRAM_COURT" → startsWith("TRAM") ; "BUS" → startsWith("BUS")
   const filteredVehicles = vehicles.filter((v) =>
-    (v.vehicule ?? '').toString().toUpperCase() === keyword
+    (v.vehicule ?? '').toString().toUpperCase().startsWith(keyword)
   )
 
   const filteredStops = stops.filter((s) =>
-    (s.vehicule ?? '').toString().toUpperCase() === keyword
+    (s.vehicule ?? '').toString().toUpperCase().startsWith(keyword)
   )
 
   return (
