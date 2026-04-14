@@ -30,7 +30,7 @@ export function useTBM() {
       setStops(data)
       stopsLoaded.current = true
     } catch (e) {
-      // stops non-bloquants
+      console.error('[TBM] stops error:', e.message)
     }
   }
 
