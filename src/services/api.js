@@ -4,7 +4,7 @@ export const BORDEAUX_BBOX = { lamin: 44.7, lomin: -0.8, lamax: 44.95, lomax: -0
 const DATAHUB_KEY = import.meta.env.VITE_DATAHUB_API_KEY
 const SNCF_KEY = import.meta.env.VITE_SNCF_API_KEY
 const TOMTOM_KEY = import.meta.env.VITE_TOMTOM_API_KEY
-const DATAHUB_BASE = 'https://datahub.bordeaux-metropole.fr/api/explore/v2.1/catalog/datasets'
+const GEOJSON_BASE = '/api/datahub/geojson/features'
 
 async function apiFetch(url, options = {}) {
   const res = await fetch(url, options)
@@ -16,33 +16,42 @@ async function apiFetch(url, options = {}) {
   }
 }
 
+// Convertit un GeoJSON FeatureCollection en tableau d'objets plats
+// avec geo_point_2d: { lat, lon } pour compatibilité avec les composants existants
+function flattenGeoJSON(geojson) {
+  return (geojson.features ?? [])
+    .filter((f) => f.geometry?.coordinates)
+    .map((f) => ({
+      ...f.properties,
+      geo_point_2d: {
+        lon: f.geometry.coordinates[0],
+        lat: f.geometry.coordinates[1],
+      },
+    }))
+}
+
 export async function fetchVCub() {
-  const url = `${DATAHUB_BASE}/ci_vcub_p/records?limit=200&apikey=${DATAHUB_KEY}`
-  const data = await apiFetch(url)
-  return data.results
+  const data = await apiFetch(`${GEOJSON_BASE}/CI_VCUB_P?key=${DATAHUB_KEY}`)
+  return flattenGeoJSON(data)
 }
 
 export async function fetchTBMStops() {
-  const url = `${DATAHUB_BASE}/sv_arret_p/records?limit=2000&apikey=${DATAHUB_KEY}`
-  const data = await apiFetch(url)
-  return data.results
+  const data = await apiFetch(`${GEOJSON_BASE}/SV_ARRET_P?key=${DATAHUB_KEY}`)
+  return flattenGeoJSON(data)
 }
 
 export async function fetchTBMVehicles() {
-  // Positions véhicules TBM temps réel
-  const url = `${DATAHUB_BASE}/sv_vehic_p/records?limit=500&apikey=${DATAHUB_KEY}`
-  const data = await apiFetch(url)
-  return data.results
+  const data = await apiFetch(`${GEOJSON_BASE}/SV_VEHIC_P?key=${DATAHUB_KEY}`)
+  return flattenGeoJSON(data)
 }
 
 export async function fetchTrafficLights() {
-  const url = `${DATAHUB_BASE}/pc_carf_p/records?limit=2000&apikey=${DATAHUB_KEY}`
-  const data = await apiFetch(url)
-  return data.results
+  const data = await apiFetch(`${GEOJSON_BASE}/PC_CARF_P?key=${DATAHUB_KEY}`)
+  return flattenGeoJSON(data)
 }
 
 export async function fetchSNCF() {
-  const url = 'https://api.sncf.com/v1/coverage/sncf/stop_areas/stop_area:SNCF:87581009/departures?count=20'
+  const url = '/api/sncf/v1/coverage/sncf/stop_areas/stop_area:SNCF:87581009/departures?count=20'
   const data = await apiFetch(url, {
     headers: { Authorization: `Basic ${btoa(SNCF_KEY + ':')}` },
   })
@@ -51,7 +60,7 @@ export async function fetchSNCF() {
 
 export async function fetchOpenSky() {
   const { lamin, lomin, lamax, lomax } = BORDEAUX_BBOX
-  const url = `https://opensky-network.org/api/states/all?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`
+  const url = `/api/opensky/states/all?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`
   const data = await apiFetch(url)
   return data.states ?? []
 }
