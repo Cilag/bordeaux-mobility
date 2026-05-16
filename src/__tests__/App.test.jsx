@@ -1,0 +1,28 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import App from '../App'
+
+// Le mode live monte des cartes Leaflet et lance des fetch réseau : on le mocke.
+vi.mock('../live/LivePage', () => ({ default: () => <div>LIVE MODE</div> }))
+// DashboardPage est lourd (carte + chargement) : on le mocke pour tester le routage seul.
+vi.mock('../dashboard/DashboardPage', () => ({
+  default: () => <div>DASHBOARD</div>,
+}))
+
+describe('App routing', () => {
+  it('redirects / to the mobilité dashboard', () => {
+    render(<MemoryRouter initialEntries={['/']}><App /></MemoryRouter>)
+    expect(screen.getByText('DASHBOARD')).toBeInTheDocument()
+  })
+
+  it('renders the dashboard for /dashboard/:domaine', () => {
+    render(<MemoryRouter initialEntries={['/dashboard/stationnement']}><App /></MemoryRouter>)
+    expect(screen.getByText('DASHBOARD')).toBeInTheDocument()
+  })
+
+  it('renders the live page for /live', () => {
+    render(<MemoryRouter initialEntries={['/live']}><App /></MemoryRouter>)
+    expect(screen.getByText('LIVE MODE')).toBeInTheDocument()
+  })
+})
