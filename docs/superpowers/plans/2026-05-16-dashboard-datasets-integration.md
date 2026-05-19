@@ -47,6 +47,7 @@
 | Offres bus/tram/scolaire (GTFS) | `offres-de-services-bus-tramway-gtfs` | mobilite |
 | Schéma directeur IRVE | `met_sdirve` | mobilite |
 | Véhicules en autopartage | `met_vehicule-station-autopartage-tr` | mobilite |
+| Accidents corporels de la circulation 2012-2019 | `accidents-corporels-de-la-circulation-sur-bordeaux-metropole-2012-2019` | mobilite |
 | Parkings données techniques | `parkings-donnees-techniques-2026-mars` | stationnement |
 | Parkings tarifs | `parkings-tarifs-2025-fevrier` | stationnement |
 
@@ -579,7 +580,15 @@ git commit -m "feat: administrative contours loading hook"
     geometrie: 'point', mode: ['voiture'], categorie: 'irve',
     dateField: 'mdate', millesime: null, viz: ['carte'],
   },
+  {
+    id: 'accidents-corporels', domaine: 'mobilite', libelle: 'Accidents corporels de la circulation 2012-2019',
+    source: { type: 'opendatasoft', datasetId: 'accidents-corporels-de-la-circulation-sur-bordeaux-metropole-2012-2019' },
+    geometrie: 'point', mode: ['voiture', 'velo', 'pieton'], categorie: 'securite',
+    dateField: 'datetime', millesime: null, viz: ['carte', 'kpi-comptage'],
+  },
 ```
+
+Note Tâche 1 : le jeu « accidents corporels » porte ~12 000 enregistrements avec un champ géo `coordonnees` (certains nuls) et un champ de gravité `grav` — confirmer via l'inventaire que l'export GeoJSON produit bien des features `Point` et noter le champ de date exact (`datetime` ou `an`).
 
 Entrées dépendantes de l'inventaire (Tâche 1) — à ajouter seulement si confirmées exploitables, sinon documenter l'exclusion : `chantiers` (`CI_EMPRISE_A`), `lignes-commerciales` (`SV_LIGNE_A`), `lieux-desservis` (`SV_LIPUB_A`), `offres-services` (`offres-de-services-bus-tramway-gtfs`), `vehicules-autopartage` (`met_vehicule-station-autopartage-tr`).
 
