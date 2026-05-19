@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- provider + hook colocated by design */
 import { createContext, useContext, useReducer } from 'react'
 import { dashboardReducer, initialState } from './dashboardReducer'
 
