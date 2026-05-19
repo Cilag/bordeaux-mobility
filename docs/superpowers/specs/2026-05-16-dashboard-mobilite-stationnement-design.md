@@ -85,9 +85,11 @@ modification fonctionnelle. Les tests existants suivent ce déplacement.
 
 ### Loaders (approche hybride)
 
-- `loadDataset(entry)` — loader générique : fetch DataHub GeoJSON → réutilise
-  `flattenGeoJSON` → met le résultat en **cache mémoire** (les données analytiques
-  sont quasi-statiques, pas de polling). Timeout sur le fetch.
+- `loadDataset(entry)` — loader générique : fetch DataHub GeoJSON → conserve la
+  `FeatureCollection` brute (géométrie imbriquée requise par le composant Leaflet
+  `<GeoJSON>` ; pas de `flattenGeoJSON`, contrairement au code temps réel) → met
+  le résultat en **cache mémoire** (les données analytiques sont quasi-statiques,
+  pas de polling).
 - Les hooks de polling temps réel restent dédiés, sous `live/`.
 
 ### Répartition des 25 jeux
