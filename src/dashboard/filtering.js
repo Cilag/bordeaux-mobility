@@ -17,9 +17,8 @@ export function selectDatasets(entries, filters) {
   })
 }
 
-// Année extraite d'un champ de date arbitraire (ISO string, timestamp, etc.).
-function featureYear(feature, dateField) {
-  const raw = feature?.properties?.[dateField]
+function fieldYear(properties, field) {
+  const raw = properties?.[field]
   if (raw == null || raw === '') return null
   const d = new Date(raw)
   if (isNaN(d.getTime())) return null
@@ -27,9 +26,10 @@ function featureYear(feature, dateField) {
 }
 
 // Étape 2 (géographique + temporel feature-level).
-// zoneResolver : (feature) => nom de zone | null ; repli sur properties.commune
-// dateField : nom du champ de date dans properties (utilisé avec from/to)
-export function filterFeatures(features, filters, zoneResolver = null, dateField = null) {
+// zoneResolver  : (feature) => nom de zone | null ; repli sur properties.commune
+// observation   : string (champ unique) ou { start, end } (intervalle)
+//                 — la feature passe si son intervalle chevauche [from, to].
+export function filterFeatures(features, filters, zoneResolver = null, observation = null) {
   const { zone = null, from = null, to = null } = filters
   let result = features
   if (zone) {
@@ -39,12 +39,21 @@ export function filterFeatures(features, filters, zoneResolver = null, dateField
       result = result.filter((f) => (f.properties?.commune ?? null) === zone)
     }
   }
-  if ((from != null || to != null) && dateField) {
+  if ((from != null || to != null) && observation) {
     result = result.filter((f) => {
-      const y = featureYear(f, dateField)
-      if (y === null) return true // date inconnue : on garde
-      if (from != null && y < from) return false
-      if (to != null && y > to) return false
+      let s, e
+      if (typeof observation === 'string') {
+        s = e = fieldYear(f.properties, observation)
+      } else {
+        s = fieldYear(f.properties, observation.start)
+        e = fieldYear(f.properties, observation.end)
+        // Si une borne manque, on utilise l'autre comme point unique.
+        if (s == null) s = e
+        if (e == null) e = s
+      }
+      if (s == null && e == null) return true // date inconnue : on garde
+      if (to != null && s != null && s > to) return false
+      if (from != null && e != null && e < from) return false
       return true
     })
   }

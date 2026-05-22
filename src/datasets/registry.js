@@ -97,6 +97,7 @@ export const REGISTRY = [
     mode: ['bus_tram'],
     categorie: 'perturbations',
     dateField: 'mdate',
+    observationField: { start: 'debut', end: 'fin' },
     millesime: null,
     viz: ['carte'],
   },
@@ -121,6 +122,7 @@ export const REGISTRY = [
     mode: ['voiture'],
     categorie: 'perturbations',
     dateField: 'mdate',
+    observationField: { start: 'date_debut', end: 'date_fin' },
     millesime: null,
     viz: ['carte', 'kpi-comptage'],
   },
@@ -229,6 +231,7 @@ export const REGISTRY = [
     mode: ['voiture'],
     categorie: 'perturbations',
     dateField: 'mdate',
+    observationField: { start: 'date_debut', end: 'date_fin' }, // intervalle d'activité
     millesime: null,
     viz: ['carte', 'kpi-comptage'],
   },

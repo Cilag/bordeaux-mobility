@@ -60,3 +60,28 @@ describe('filterFeatures', () => {
     expect(r).toEqual([{ properties: { commune: 'Pessac' } }])
   })
 })
+
+describe('filterFeatures — intervalles temporels', () => {
+  const features = [
+    { properties: { date_debut: '2018-06-01', date_fin: '2018-08-31' } }, // été 2018
+    { properties: { date_debut: '2020-01-01', date_fin: '2024-12-31' } }, // long chantier
+    { properties: { date_debut: '2025-11-24', date_fin: '2026-05-30' } }, // récent
+    { properties: { date_debut: '2022-03-01', date_fin: '2022-09-30' } }, // 2022
+  ]
+  const obs = { start: 'date_debut', end: 'date_fin' }
+
+  it('garde les intervalles qui chevauchent [2018,2020]', () => {
+    expect(filterFeatures(features, { from: 2018, to: 2020 }, null, obs)).toHaveLength(2)
+  })
+
+  it('garde les intervalles actifs sur [2023,2026]', () => {
+    expect(filterFeatures(features, { from: 2023, to: 2026 }, null, obs)).toHaveLength(2)
+  })
+
+  it('exclut les intervalles entièrement hors plage', () => {
+    // Seul 2022 chevauche [2022,2022]
+    expect(filterFeatures(features, { from: 2022, to: 2022 }, null, obs)).toHaveLength(2)
+    // 2018 isolé : seul l'intervalle été 2018 chevauche
+    expect(filterFeatures(features, { from: 2018, to: 2018 }, null, obs)).toHaveLength(1)
+  })
+})
