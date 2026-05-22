@@ -62,13 +62,15 @@ function DashboardInner({ domaine }) {
       .filter(Boolean)
   }, [activeEntries, datasetStates, state.filters, zoneResolver])
 
-  // Lignes de légende : tous les jeux du domaine actif, avec leur état courant.
+  // Lignes de légende : tous les jeux du domaine actif, avec leur état courant
+  // et la date du jeu (issue du champ dateField si le jeu est chargé).
   const legendItems = useMemo(() => entries.map((entry) => {
     const ds = datasetStates[entry.id]
     const status = ds?.status ?? 'chargement'
     const layer = activeLayers.find((l) => l.id === entry.id)
     const count = layer ? layer.features.length : (ds?.dataset?.features?.length ?? 0)
-    return { id: entry.id, libelle: entry.libelle, entry, status, count }
+    const date = ds?.dataset ? datasetDate(entry, ds.dataset) : null
+    return { id: entry.id, libelle: entry.libelle, entry, status, count, date }
   }), [entries, datasetStates, activeLayers])
 
   // Options des filtres + compteurs par catégorie (issus des couches actives).
