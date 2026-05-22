@@ -8,7 +8,7 @@ export function validateEntry(entry) {
   if (!entry.id) errors.push('id manquant')
   if (!DOMAINES.includes(entry.domaine)) errors.push(`domaine invalide: ${entry.domaine}`)
   if (!entry.libelle) errors.push('libelle manquant')
-  if (!GEOMETRIES.includes(entry.geometrie)) errors.push(`geometrie invalide: ${entry.geometrie}`)
+  if (entry.geometrie !== null && !GEOMETRIES.includes(entry.geometrie)) errors.push(`geometrie invalide: ${entry.geometrie}`)
   if (!Array.isArray(entry.mode)) {
     errors.push('mode doit être un tableau')
   } else {

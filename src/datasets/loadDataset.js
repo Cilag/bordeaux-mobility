@@ -5,6 +5,9 @@ function buildUrl(source) {
   if (source.type === 'datahub-geojson') {
     return `/api/datahub/geojson/features/${source.datahubId}?key=${DATAHUB_KEY}`
   }
+  if (source.type === 'opendatasoft') {
+    return `/api/opendata/api/explore/v2.1/catalog/datasets/${source.datasetId}/exports/geojson`
+  }
   throw new Error(`type de source non supporté: ${source.type}`)
 }
 
