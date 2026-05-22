@@ -84,4 +84,17 @@ describe('filterFeatures — intervalles temporels', () => {
     // 2018 isolé : seul l'intervalle été 2018 chevauche
     expect(filterFeatures(features, { from: 2018, to: 2018 }, null, obs)).toHaveLength(1)
   })
+
+  it('gère les dates multi-valeurs séparées par # (convention Opendatasoft)', () => {
+    const multi = [
+      // Chantier en deux périodes, toutes les deux en 2025-2026
+      { properties: { date_debut: '2025-11-05#2026-01-16', date_fin: '2026-06-30#2026-07-31' } },
+      // Une période 2022 et une période 2023
+      { properties: { date_debut: '2022-03-01#2023-04-01', date_fin: '2022-09-30#2023-09-30' } },
+    ]
+    // 2021-2022 : exclut le chantier 2025-26, garde celui qui a une période en 2022
+    expect(filterFeatures(multi, { from: 2021, to: 2022 }, null, obs)).toHaveLength(1)
+    // 2025-2026 : garde le 2025-26, exclut le second
+    expect(filterFeatures(multi, { from: 2025, to: 2026 }, null, obs)).toHaveLength(1)
+  })
 })

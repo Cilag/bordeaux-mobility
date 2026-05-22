@@ -17,18 +17,40 @@ export function selectDatasets(entries, filters) {
   })
 }
 
-function fieldYear(properties, field) {
-  const raw = properties?.[field]
-  if (raw == null || raw === '') return null
-  const d = new Date(raw)
-  if (isNaN(d.getTime())) return null
-  return d.getFullYear()
+// Extrait toutes les années d'une valeur de date. Gère :
+// - entier (année brute)
+// - chaîne ISO "2024-05-01" ou "2024-05-01T10:00:00Z"
+// - chaîne multi-valeurs séparée par '#' (convention Opendatasoft)
+//   ex. "2025-11-05#2026-01-16" => [2025, 2026]
+function extractYears(raw) {
+  if (raw == null || raw === '') return []
+  if (typeof raw === 'number' && raw >= 1900 && raw <= 2200) return [raw]
+  const years = []
+  for (const part of String(raw).split('#').map((s) => s.trim()).filter(Boolean)) {
+    if (/^\d{4}$/.test(part)) {
+      years.push(+part)
+      continue
+    }
+    const d = new Date(part)
+    if (!isNaN(d.getTime())) years.push(d.getFullYear())
+  }
+  return years
+}
+
+function fieldMinYear(properties, field) {
+  const ys = extractYears(properties?.[field])
+  return ys.length ? Math.min(...ys) : null
+}
+function fieldMaxYear(properties, field) {
+  const ys = extractYears(properties?.[field])
+  return ys.length ? Math.max(...ys) : null
 }
 
 // Étape 2 (géographique + temporel feature-level).
 // zoneResolver  : (feature) => nom de zone | null ; repli sur properties.commune
-// observation   : string (champ unique) ou { start, end } (intervalle)
-//                 — la feature passe si son intervalle chevauche [from, to].
+// observation   : string (champ unique, traité comme intervalle [min,max] de ce champ)
+//                 ou { start, end } (intervalle entre deux champs distincts)
+//                 La feature passe si son intervalle [min(start),max(end)] chevauche [from,to].
 export function filterFeatures(features, filters, zoneResolver = null, observation = null) {
   const { zone = null, from = null, to = null } = filters
   let result = features
@@ -40,20 +62,16 @@ export function filterFeatures(features, filters, zoneResolver = null, observati
     }
   }
   if ((from != null || to != null) && observation) {
+    const startField = typeof observation === 'string' ? observation : observation.start
+    const endField = typeof observation === 'string' ? observation : observation.end
     result = result.filter((f) => {
-      let s, e
-      if (typeof observation === 'string') {
-        s = e = fieldYear(f.properties, observation)
-      } else {
-        s = fieldYear(f.properties, observation.start)
-        e = fieldYear(f.properties, observation.end)
-        // Si une borne manque, on utilise l'autre comme point unique.
-        if (s == null) s = e
-        if (e == null) e = s
-      }
+      const s = fieldMinYear(f.properties, startField)
+      const e = fieldMaxYear(f.properties, endField)
       if (s == null && e == null) return true // date inconnue : on garde
-      if (to != null && s != null && s > to) return false
-      if (from != null && e != null && e < from) return false
+      const lo = s ?? e
+      const hi = e ?? s
+      if (to != null && lo > to) return false
+      if (from != null && hi < from) return false
       return true
     })
   }
