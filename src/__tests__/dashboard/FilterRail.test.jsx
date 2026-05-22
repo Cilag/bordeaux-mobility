@@ -34,7 +34,7 @@ describe('FilterRail', () => {
 
   it('toggles a mode checkbox into the state', async () => {
     renderRail()
-    await userEvent.click(screen.getByLabelText('voiture'))
+    await userEvent.click(screen.getByLabelText('Voiture'))
     expect(screen.getByTestId('state')).toHaveTextContent('"modes":["voiture"]')
   })
 
