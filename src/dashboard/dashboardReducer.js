@@ -1,7 +1,7 @@
 export function initialState(domaine) {
   return {
     domaine,
-    filters: { categories: [], modes: [], zone: null, annee: null },
+    filters: { categories: [], modes: [], zone: null, annee: null, from: null, to: null },
   }
 }
 
@@ -21,6 +21,8 @@ export function dashboardReducer(state, action) {
       return { ...state, filters: { ...state.filters, zone: action.value } }
     case 'SET_ANNEE':
       return { ...state, filters: { ...state.filters, annee: action.value } }
+    case 'SET_DATE_RANGE':
+      return { ...state, filters: { ...state.filters, from: action.from, to: action.to, annee: null } }
     case 'RESET_FILTERS':
       return initialState(state.domaine)
     default:

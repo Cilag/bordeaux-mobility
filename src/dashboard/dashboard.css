@@ -24,6 +24,77 @@
 .topbar-freshness { margin-left: auto; font-size: 0.8rem; color: #cdd9e5; }
 .live-link { color: #fff; text-decoration: none; font-size: 0.85rem; }
 
+/* ----------- Timeline ----------- */
+.timeline {
+  background: #fff;
+  border-bottom: 1px solid #d4d4d8;
+  padding: 0.5rem 1rem 0.55rem;
+  flex-shrink: 0;
+}
+.timeline-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 6px;
+}
+.timeline-icon { font-size: 0.95rem; }
+.timeline-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #5a6b7d;
+}
+.timeline-range {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  font-variant-numeric: tabular-nums;
+}
+.timeline-reset {
+  margin-left: auto;
+  font-size: 0.72rem;
+  background: none;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  color: #5a6b7d;
+}
+.timeline-track {
+  display: flex;
+  gap: 4px;
+}
+.timeline-year {
+  flex: 1;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  padding: 6px 4px;
+  border: 1px solid #d4d4d8;
+  background: #fff;
+  color: #1f2933;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.timeline-year:hover { background: #e8eef5; }
+.timeline-year.active {
+  background: #1e3a5f;
+  color: #fff;
+  border-color: #1e3a5f;
+}
+.timeline-year.edge { box-shadow: 0 0 0 2px #1e3a5f33; }
+.timeline-year.pending {
+  background: #c8ddec;
+  color: #1e3a5f;
+  border-color: #1e3a5f;
+}
+.timeline-hint {
+  margin: 4px 0 0;
+  font-size: 0.7rem;
+  color: #8a96a3;
+}
+
 /* ----------- Layout ----------- */
 .dashboard-body { display: flex; flex: 1; min-height: 0; }
 .dashboard-map { flex: 1; min-width: 0; position: relative; }

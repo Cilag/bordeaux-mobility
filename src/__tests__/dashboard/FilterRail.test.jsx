@@ -44,17 +44,11 @@ describe('FilterRail', () => {
     expect(screen.getByTestId('state')).toHaveTextContent('"zone":"Pessac"')
   })
 
-  it('sets the year from the select', async () => {
-    renderRail()
-    await userEvent.selectOptions(screen.getByLabelText('Année'), '2019')
-    expect(screen.getByTestId('state')).toHaveTextContent('"annee":2019')
-  })
-
   it('resets all filters', async () => {
     renderRail()
     await userEvent.click(screen.getByLabelText('arrets'))
     await userEvent.click(screen.getByRole('button', { name: /Réinitialiser/ }))
     expect(screen.getByTestId('state'))
-      .toHaveTextContent('{"categories":[],"modes":[],"zone":null,"annee":null}')
+      .toHaveTextContent('{"categories":[],"modes":[],"zone":null,"annee":null,"from":null,"to":null}')
   })
 })

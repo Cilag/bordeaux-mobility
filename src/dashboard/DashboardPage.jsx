@@ -14,7 +14,11 @@ import KpiRow from './KpiRow'
 import ChartGrid from './ChartGrid'
 import DashboardMap from './DashboardMap'
 import LayerLegend from './LayerLegend'
+import Timeline from './Timeline'
 import './dashboard.css'
+
+const TIMELINE_MIN = 2012
+const TIMELINE_MAX = 2026
 
 function DashboardInner({ domaine }) {
   const { state } = useDashboard()
@@ -29,13 +33,13 @@ function DashboardInner({ domaine }) {
     [entries, state.filters],
   )
 
-  // Étape 2 : filtre géographique → features par jeu (uniquement les jeux 'pret').
+  // Étape 2 : filtre géographique + temporel → features par jeu (uniquement les jeux 'pret').
   const activeLayers = useMemo(() => {
     return activeEntries
       .map((entry) => {
         const ds = datasetStates[entry.id]
         if (!ds || ds.status !== 'pret') return null
-        const features = filterFeatures(ds.dataset.features, state.filters, zoneResolver)
+        const features = filterFeatures(ds.dataset.features, state.filters, zoneResolver, entry.dateField)
         return { id: entry.id, libelle: entry.libelle, entry, dataset: ds.dataset, features }
       })
       .filter(Boolean)
@@ -201,6 +205,7 @@ function DashboardInner({ domaine }) {
   return (
     <div className="dashboard">
       <TopBar domaine={domaine} oldestDate={oldest} />
+      <Timeline minYear={TIMELINE_MIN} maxYear={TIMELINE_MAX} />
       <div className="dashboard-body">
         <div className="dashboard-map">
           {empty

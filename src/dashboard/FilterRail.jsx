@@ -12,7 +12,7 @@ const MODE_LABELS = {
 // options.modes, options.zones, options.annees : autres axes de filtrage
 export default function FilterRail({ options }) {
   const { state, dispatch } = useDashboard()
-  const { categories, modes, zones, annees, categoryCounts = {} } = options
+  const { categories, modes, zones, categoryCounts = {} } = options
   const { filters } = state
 
   // Regroupe les catégories disponibles par thème pour l'affichage.
@@ -89,18 +89,7 @@ export default function FilterRail({ options }) {
         </select>
       </fieldset>
 
-      <fieldset>
-        <legend>Temporel</legend>
-        <label htmlFor="annee-select">Année</label>
-        <select
-          id="annee-select"
-          value={filters.annee ?? ''}
-          onChange={(e) => dispatch({ type: 'SET_ANNEE', value: e.target.value ? Number(e.target.value) : null })}
-        >
-          <option value="">Toutes les années</option>
-          {annees.map((a) => <option key={a} value={a}>{a}</option>)}
-        </select>
-      </fieldset>
+      {/* Filtre temporel : voir la frise chronologique au-dessus du dashboard. */}
     </aside>
   )
 }

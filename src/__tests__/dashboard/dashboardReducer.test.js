@@ -5,8 +5,16 @@ describe('dashboardReducer', () => {
   it('has an initial state with empty filters', () => {
     expect(initialState('mobilite')).toEqual({
       domaine: 'mobilite',
-      filters: { categories: [], modes: [], zone: null, annee: null },
+      filters: { categories: [], modes: [], zone: null, annee: null, from: null, to: null },
     })
+  })
+
+  it('SET_DATE_RANGE sets from/to and clears annee', () => {
+    const dirty = { domaine: 'mobilite', filters: { categories: [], modes: [], zone: null, annee: 2019, from: null, to: null } }
+    const s = dashboardReducer(dirty, { type: 'SET_DATE_RANGE', from: 2015, to: 2020 })
+    expect(s.filters.from).toBe(2015)
+    expect(s.filters.to).toBe(2020)
+    expect(s.filters.annee).toBeNull()
   })
 
   it('SET_DOMAINE changes the domaine and resets filters', () => {
