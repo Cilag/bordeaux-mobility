@@ -5,6 +5,7 @@ import { entriesForDomaine } from '../datasets/registry'
 import { DashboardProvider, useDashboard } from './DashboardContext'
 import { useDatasets } from './useDatasets'
 import { useContours } from './useContours'
+import { useBikeUsage } from './useBikeUsage'
 import { selectDatasets, filterFeatures } from './filtering'
 import { datasetDate, oldestDate } from './freshness'
 import TopBar from './TopBar'
@@ -20,6 +21,7 @@ function DashboardInner({ domaine }) {
   const entries = useMemo(() => entriesForDomaine(domaine), [domaine])
   const datasetStates = useDatasets(entries)
   const { zoneNames, resolver: zoneResolver } = useContours()
+  const bikeUsage = useBikeUsage()
 
   // Étape 1 : filtres dataset (catégorie + mode + temporel).
   const activeEntries = useMemo(
@@ -146,11 +148,19 @@ function DashboardInner({ domaine }) {
 
   const charts = useMemo(() => {
     const out = []
-    // Diagramme d'usage réel — voiture seulement, donnée disponible côté mobilité.
+    // Diagrammes d'usage par mode — disponibles côté mobilité.
     if (domaine === 'mobilite') {
       out.push({
+        key: 'velo-top-capteurs',
+        title: '🚲 Lieux les plus fréquentés en vélo — passages cumulés (2 ans)',
+        status: bikeUsage.status,
+        date: oldest,
+        type: 'velo-top-capteurs',
+        data: bikeUsage.items,
+      })
+      out.push({
         key: 'trafic-top-voies',
-        title: 'Top voies les plus fréquentées — trafic journalier moyen ouvrable (TJM)',
+        title: '🚗 Voies les plus fréquentées en voiture — TJM (jour ouvrable)',
         status: trafficTopRoads.length === 0 ? 'vide' : 'pret',
         date: oldest,
         type: 'trafic-top-voies',
@@ -184,7 +194,7 @@ function DashboardInner({ domaine }) {
       data: topDatasets,
     })
     return out
-  }, [domaine, trafficTopRoads, featuresByZone, modeDistribution, topDatasets, oldest])
+  }, [domaine, trafficTopRoads, bikeUsage, featuresByZone, modeDistribution, topDatasets, oldest])
 
   const empty = entries.length === 0
 
