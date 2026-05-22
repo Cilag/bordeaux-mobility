@@ -4,6 +4,7 @@ import { DOMAINES } from '../datasets/schema'
 import { entriesForDomaine } from '../datasets/registry'
 import { DashboardProvider, useDashboard } from './DashboardContext'
 import { useDatasets } from './useDatasets'
+import { useContours } from './useContours'
 import { selectDatasets, filterFeatures } from './filtering'
 import { datasetDate, oldestDate } from './freshness'
 import TopBar from './TopBar'
@@ -18,6 +19,7 @@ function DashboardInner({ domaine }) {
   const { state } = useDashboard()
   const entries = useMemo(() => entriesForDomaine(domaine), [domaine])
   const datasetStates = useDatasets(entries)
+  const { zoneNames, resolver: zoneResolver } = useContours()
 
   // Étape 1 : filtres dataset (catégorie + mode + temporel).
   const activeEntries = useMemo(
@@ -31,11 +33,11 @@ function DashboardInner({ domaine }) {
       .map((entry) => {
         const ds = datasetStates[entry.id]
         if (!ds || ds.status !== 'pret') return null
-        const features = filterFeatures(ds.dataset.features, state.filters)
+        const features = filterFeatures(ds.dataset.features, state.filters, zoneResolver)
         return { id: entry.id, libelle: entry.libelle, entry, dataset: ds.dataset, features }
       })
       .filter(Boolean)
-  }, [activeEntries, datasetStates, state.filters])
+  }, [activeEntries, datasetStates, state.filters, zoneResolver])
 
   // Lignes de légende : tous les jeux du domaine actif, avec leur état courant.
   const legendItems = useMemo(() => entries.map((entry) => {
@@ -51,19 +53,14 @@ function DashboardInner({ domaine }) {
     const categories = [...new Set(entries.map((e) => e.categorie))].sort()
     const modes = [...new Set(entries.flatMap((e) => e.mode))].sort()
     const annees = [...new Set(entries.map((e) => e.millesime).filter((m) => m != null))].sort()
-    const zones = [...new Set(
-      Object.values(datasetStates)
-        .filter((d) => d.status === 'pret')
-        .flatMap((d) => d.dataset.features.map((f) => f.properties?.commune))
-        .filter(Boolean),
-    )].sort()
+    const zones = zoneNames // alimenté par les contours administratifs (FV_COMMU_S)
     const categoryCounts = {}
     activeLayers.forEach((l) => {
       const c = l.entry.categorie
       categoryCounts[c] = (categoryCounts[c] || 0) + l.features.length
     })
     return { categories, modes, annees, zones, categoryCounts }
-  }, [entries, datasetStates, activeLayers])
+  }, [entries, activeLayers, zoneNames])
 
   // KPIs : indicateurs synthétiques pour ce domaine.
   const stats = useMemo(() => {
@@ -105,12 +102,38 @@ function DashboardInner({ domaine }) {
       .slice(0, 10)
   }, [activeLayers])
 
+  // Features par commune (top 12) — point-dans-polygone sur les contours.
+  const featuresByZone = useMemo(() => {
+    if (!zoneNames.length) return []
+    const acc = {}
+    activeLayers.forEach((layer) => {
+      layer.features.forEach((f) => {
+        const z = zoneResolver(f)
+        if (z) acc[z] = (acc[z] || 0) + 1
+      })
+    })
+    return Object.entries(acc)
+      .map(([zone, count]) => ({ zone, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12)
+  }, [activeLayers, zoneResolver, zoneNames.length])
+
   const oldest = useMemo(
     () => oldestDate(activeLayers.map((l) => datasetDate(l.entry, l.dataset))),
     [activeLayers],
   )
 
   const charts = useMemo(() => [
+    {
+      key: 'features-par-commune',
+      title: domaine === 'stationnement'
+        ? 'Places de stationnement par commune (top 12)'
+        : 'Features par commune (top 12)',
+      status: featuresByZone.length === 0 ? 'vide' : 'pret',
+      date: oldest,
+      type: 'features-par-zone',
+      data: featuresByZone,
+    },
     {
       key: 'mode-distribution',
       title: 'Répartition par mode de transport',
@@ -127,7 +150,7 @@ function DashboardInner({ domaine }) {
       type: 'features-par-jeu',
       data: topDatasets,
     },
-  ], [modeDistribution, topDatasets, oldest])
+  ], [domaine, featuresByZone, modeDistribution, topDatasets, oldest])
 
   const empty = entries.length === 0
 

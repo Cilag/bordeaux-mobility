@@ -11,8 +11,13 @@ export function selectDatasets(entries, filters) {
 }
 
 // Étape 2 (géographique) : quelles features d'un jeu sont retenues.
-export function filterFeatures(features, filters) {
+// Si zoneResolver est fourni, il est utilisé (point-dans-polygone) ;
+// sinon repli sur la propriété `commune` éventuelle de la feature.
+export function filterFeatures(features, filters, zoneResolver = null) {
   const { zone = null } = filters
   if (!zone) return features
+  if (zoneResolver) {
+    return features.filter((f) => zoneResolver(f) === zone)
+  }
   return features.filter((f) => (f.properties?.commune ?? null) === zone)
 }
