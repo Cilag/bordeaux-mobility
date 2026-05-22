@@ -1,11 +1,13 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { DOMAINES } from '../datasets/schema'
 import { entriesForDomaine } from '../datasets/registry'
+import { loadDataset } from '../datasets/loadDataset'
 import { DashboardProvider, useDashboard } from './DashboardContext'
 import { useDatasets } from './useDatasets'
 import { useContours } from './useContours'
 import { useBikeUsage } from './useBikeUsage'
+import { featureLengthKm } from './geo'
 import { selectDatasets, filterFeatures } from './filtering'
 import { datasetDate, oldestDate } from './freshness'
 import TopBar from './TopBar'
@@ -26,6 +28,18 @@ function DashboardInner({ domaine }) {
   const datasetStates = useDatasets(entries)
   const { zoneNames, resolver: zoneResolver } = useContours()
   const bikeUsage = useBikeUsage()
+
+  // Carrefours à feux chargés de façon autonome — sert de proxy de "demande"
+  // dans le diagramme offre/demande, et reste disponible quand on est sur
+  // le domaine Stationnement (où carrefours-feux n'appartient pas).
+  const [carrefoursFeatures, setCarrefoursFeatures] = useState([])
+  useEffect(() => {
+    let cancelled = false
+    loadDataset({ id: 'carrefours-feux', source: { type: 'datahub-geojson', datahubId: 'PC_CARF_P' } })
+      .then((d) => { if (!cancelled) setCarrefoursFeatures(d.features ?? []) })
+      .catch(() => { if (!cancelled) setCarrefoursFeatures([]) })
+    return () => { cancelled = true }
+  }, [])
 
   // Étape 1 : filtres dataset (catégorie + mode + temporel).
   const activeEntries = useMemo(
@@ -175,6 +189,84 @@ function DashboardInner({ domaine }) {
       .slice(0, 15)
   }, [activeLayers, zoneResolver, zoneNames.length])
 
+  // Bornes IRVE par commune (sommer bornes + stations).
+  const irveByCommune = useMemo(() => {
+    const layers = activeLayers.filter((l) => l.id === 'irve-bornes' || l.id === 'irve-stations')
+    if (!layers.length || !zoneNames.length) return []
+    const acc = {}
+    layers.forEach((l) => l.features.forEach((f) => {
+      const c = zoneResolver(f)
+      if (c) acc[c] = (acc[c] || 0) + 1
+    }))
+    return Object.entries(acc)
+      .map(([commune, count]) => ({ commune, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15)
+  }, [activeLayers, zoneResolver, zoneNames.length])
+
+  // Km de couloirs de bus par commune.
+  const busKmByCommune = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'couloirs-bus')
+    if (!layer || !zoneNames.length) return []
+    const acc = {}
+    layer.features.forEach((f) => {
+      const km = featureLengthKm(f)
+      if (km === 0) return
+      const c = zoneResolver(f)
+      if (!c) return
+      acc[c] = (acc[c] || 0) + km
+    })
+    return Object.entries(acc)
+      .map(([commune, km]) => ({ commune, km: +km.toFixed(2) }))
+      .sort((a, b) => b.km - a.km)
+      .slice(0, 15)
+  }, [activeLayers, zoneResolver, zoneNames.length])
+
+  // Évolution des aménagements cyclables par année d'installation.
+  const cyclingByYear = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'amenagements-cyclables')
+    if (!layer) return []
+    const acc = {}
+    layer.features.forEach((f) => {
+      const an = +f.properties?.annee
+      if (!an || an < 1990 || an > 2030) return
+      acc[an] = (acc[an] || 0) + 1
+    })
+    return Object.entries(acc)
+      .map(([an, count]) => ({ an: +an, count }))
+      .sort((a, b) => a.an - b.an)
+  }, [activeLayers])
+
+  // Offre vs demande stationnement par commune.
+  // Offre = somme np_total des parkings hors voirie ; Demande proxy = nombre de carrefours à feux.
+  const supplyDemand = useMemo(() => {
+    const parkings = activeLayers.find((l) => l.id === 'parkings-hors-voirie')
+    if (!parkings || !carrefoursFeatures.length || !zoneNames.length) return []
+    const offre = {}
+    parkings.features.forEach((f) => {
+      const c = zoneResolver(f)
+      if (!c) return
+      offre[c] = (offre[c] || 0) + (Number(f.properties?.np_total) || 0)
+    })
+    const demande = {}
+    carrefoursFeatures.forEach((f) => {
+      const c = zoneResolver(f)
+      if (!c) return
+      demande[c] = (demande[c] || 0) + 1
+    })
+    const all = new Set([...Object.keys(offre), ...Object.keys(demande)])
+    return Array.from(all)
+      .map((c) => ({
+        commune: c,
+        offre: offre[c] || 0,
+        demande: demande[c] || 0,
+        ratio: demande[c] ? (offre[c] || 0) / demande[c] : 0,
+      }))
+      .filter((d) => d.offre > 0 && d.demande > 0)
+      .sort((a, b) => b.ratio - a.ratio)
+      .slice(0, 15)
+  }, [activeLayers, carrefoursFeatures, zoneResolver, zoneNames.length])
+
   // Features par commune (top 12) — point-dans-polygone sur les contours.
   const featuresByZone = useMemo(() => {
     if (!zoneNames.length) return []
@@ -224,6 +316,35 @@ function DashboardInner({ domaine }) {
         type: 'accidents-par-annee',
         data: accidentsByYear,
       })
+      out.push({
+        key: 'irve-par-commune',
+        title: '⚡ Bornes IRVE par commune (gestion électromobilité)',
+        status: irveByCommune.length === 0 ? 'vide' : 'pret',
+        date: oldest,
+        type: 'horizontal-bar',
+        data: irveByCommune,
+        props: { labelKey: 'commune', valueKey: 'count', color: '#7C5DC3', valueLabel: 'Bornes' },
+      })
+      out.push({
+        key: 'bus-km-par-commune',
+        title: '🚌 Km de couloirs de bus par commune',
+        status: busKmByCommune.length === 0 ? 'vide' : 'pret',
+        date: oldest,
+        type: 'horizontal-bar',
+        data: busKmByCommune,
+        props: {
+          labelKey: 'commune', valueKey: 'km', color: '#1E3A5F', valueLabel: 'km',
+          formatter: (v) => `${v.toFixed(1)} km`,
+        },
+      })
+      out.push({
+        key: 'amenagements-par-annee',
+        title: '🚲 Évolution des aménagements cyclables par année',
+        status: cyclingByYear.length === 0 ? 'vide' : 'pret',
+        date: oldest,
+        type: 'cycling-by-year',
+        data: cyclingByYear,
+      })
     }
     if (domaine === 'stationnement') {
       out.push({
@@ -233,6 +354,14 @@ function DashboardInner({ domaine }) {
         date: oldest,
         type: 'capacite-par-commune',
         data: parkingCapacityByCommune,
+      })
+      out.push({
+        key: 'offre-demande',
+        title: '⚖️ Offre vs demande de stationnement par commune',
+        status: supplyDemand.length === 0 ? 'vide' : 'pret',
+        date: oldest,
+        type: 'supply-demand',
+        data: supplyDemand,
       })
     }
     out.push({
@@ -262,7 +391,7 @@ function DashboardInner({ domaine }) {
       data: topDatasets,
     })
     return out
-  }, [domaine, trafficTopRoads, bikeUsage, accidentsByYear, parkingCapacityByCommune, featuresByZone, modeDistribution, topDatasets, oldest])
+  }, [domaine, trafficTopRoads, bikeUsage, accidentsByYear, irveByCommune, busKmByCommune, cyclingByYear, parkingCapacityByCommune, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest])
 
   const empty = entries.length === 0
 

@@ -6,6 +6,9 @@ import TrafficTopRoadsChart from './TrafficTopRoadsChart'
 import BikeTopLocationsChart from './BikeTopLocationsChart'
 import AccidentsByYearChart from './AccidentsByYearChart'
 import ParkingCapacityByCommuneChart from './ParkingCapacityByCommuneChart'
+import HorizontalBarChart from './HorizontalBarChart'
+import CyclingByYearChart from './CyclingByYearChart'
+import SupplyDemandChart from './SupplyDemandChart'
 
 // charts: [{ key, title, status, date, type, data }]
 export default function ChartGrid({ charts }) {
@@ -20,6 +23,9 @@ export default function ChartGrid({ charts }) {
           {c.type === 'velo-top-capteurs' && <BikeTopLocationsChart data={c.data} />}
           {c.type === 'accidents-par-annee' && <AccidentsByYearChart data={c.data} />}
           {c.type === 'capacite-par-commune' && <ParkingCapacityByCommuneChart data={c.data} />}
+          {c.type === 'horizontal-bar' && <HorizontalBarChart data={c.data} {...c.props} />}
+          {c.type === 'cycling-by-year' && <CyclingByYearChart data={c.data} />}
+          {c.type === 'supply-demand' && <SupplyDemandChart data={c.data} />}
         </ChartCard>
       ))}
     </div>
