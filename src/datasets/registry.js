@@ -384,7 +384,7 @@ export const REGISTRY = [
     id: 'stationnement-payant',
     domaine: 'stationnement',
     libelle: 'Voies en stationnement payant',
-    source: { type: 'datahub-geojson', datahubId: 'BOR_SIGSTAPAYANT' },
+    source: { type: 'opendatasoft', datasetId: 'bor_sigstapayant' },
     geometrie: 'ligne',
     mode: ['voiture'],
     categorie: 'parking-payant',
