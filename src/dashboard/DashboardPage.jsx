@@ -102,6 +102,27 @@ function DashboardInner({ domaine }) {
       .slice(0, 10)
   }, [activeLayers])
 
+  // Top voies les plus fréquentées — basé sur le comptage du trafic (mjo_val).
+  // Agrège par nom de voie (les capteurs des 2 sens partagent souvent le même nom).
+  const trafficTopRoads = useMemo(() => {
+    const comptage = activeLayers.find((l) => l.id === 'comptage-trafic')
+    if (!comptage) return []
+    const agg = {}
+    comptage.features.forEach((f) => {
+      const name = f.properties?.nom_voie
+      const mjo = f.properties?.mjo_val
+      if (!name || typeof mjo !== 'number') return
+      if (!agg[name]) agg[name] = { nom_voie: name, mjo: 0, hpm: 0, hps: 0 }
+      agg[name].mjo += mjo
+      agg[name].hpm += f.properties?.hpm_val || 0
+      agg[name].hps += f.properties?.hps_val || 0
+    })
+    return Object.values(agg)
+      .sort((a, b) => b.mjo - a.mjo)
+      .slice(0, 15)
+      .map((d) => ({ ...d, mjo: Math.round(d.mjo), hpm: Math.round(d.hpm), hps: Math.round(d.hps) }))
+  }, [activeLayers])
+
   // Features par commune (top 12) — point-dans-polygone sur les contours.
   const featuresByZone = useMemo(() => {
     if (!zoneNames.length) return []
@@ -123,8 +144,20 @@ function DashboardInner({ domaine }) {
     [activeLayers],
   )
 
-  const charts = useMemo(() => [
-    {
+  const charts = useMemo(() => {
+    const out = []
+    // Diagramme d'usage réel — voiture seulement, donnée disponible côté mobilité.
+    if (domaine === 'mobilite') {
+      out.push({
+        key: 'trafic-top-voies',
+        title: 'Top voies les plus fréquentées — trafic journalier moyen ouvrable (TJM)',
+        status: trafficTopRoads.length === 0 ? 'vide' : 'pret',
+        date: oldest,
+        type: 'trafic-top-voies',
+        data: trafficTopRoads,
+      })
+    }
+    out.push({
       key: 'features-par-commune',
       title: domaine === 'stationnement'
         ? 'Places de stationnement par commune (top 12)'
@@ -133,24 +166,25 @@ function DashboardInner({ domaine }) {
       date: oldest,
       type: 'features-par-zone',
       data: featuresByZone,
-    },
-    {
+    })
+    out.push({
       key: 'mode-distribution',
-      title: 'Répartition par mode de transport',
+      title: 'Couverture infrastructure par mode de transport',
       status: modeDistribution.length === 0 ? 'vide' : 'pret',
       date: oldest,
       type: 'mode-distribution',
       data: modeDistribution,
-    },
-    {
+    })
+    out.push({
       key: 'top-datasets',
       title: 'Jeux de données par volume (top 10)',
       status: topDatasets.length === 0 ? 'vide' : 'pret',
       date: oldest,
       type: 'features-par-jeu',
       data: topDatasets,
-    },
-  ], [domaine, featuresByZone, modeDistribution, topDatasets, oldest])
+    })
+    return out
+  }, [domaine, trafficTopRoads, featuresByZone, modeDistribution, topDatasets, oldest])
 
   const empty = entries.length === 0
 

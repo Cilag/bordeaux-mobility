@@ -261,14 +261,14 @@ export const REGISTRY = [
   {
     id: 'comptage-trafic',
     domaine: 'mobilite',
-    libelle: 'Comptage du trafic',
+    libelle: 'Comptage du trafic (TJM)',
     source: { type: 'opendatasoft', datasetId: 'comptage-du-trafic-2025-bordeaux-metropole' },
-    geometrie: 'point',
+    geometrie: null, // jeu tabulaire — alimente uniquement les diagrammes
     mode: ['voiture'],
     categorie: 'comptage',
     dateField: 'mdate',
     millesime: 2025,
-    viz: ['carte', 'kpi-comptage'],
+    viz: ['kpi-comptage', 'diagramme-trafic'],
   },
   {
     id: 'mobilite-alternative-2019',
