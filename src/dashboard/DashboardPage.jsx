@@ -27,7 +27,7 @@ function DashboardInner({ domaine }) {
   const entries = useMemo(() => entriesForDomaine(domaine), [domaine])
   const datasetStates = useDatasets(entries)
   const { zoneNames, resolver: zoneResolver } = useContours()
-  const bikeUsage = useBikeUsage()
+  const bikeUsage = useBikeUsage({ from: state.filters.from, to: state.filters.to })
 
   // Carrefours à feux chargés de façon autonome — sert de proxy de "demande"
   // dans le diagramme offre/demande, et reste disponible quand on est sur
@@ -296,7 +296,9 @@ function DashboardInner({ domaine }) {
     if (domaine === 'mobilite') {
       out.push({
         key: 'velo-top-capteurs',
-        title: '🚲 Lieux les plus fréquentés en vélo — passages cumulés (2 ans)',
+        title: state.filters.from != null && state.filters.to != null
+          ? `🚲 Lieux les plus fréquentés en vélo — passages ${state.filters.from}-${state.filters.to}`
+          : '🚲 Lieux les plus fréquentés en vélo — passages cumulés (fenêtre 2 ans)',
         status: bikeUsage.status,
         date: oldest,
         type: 'velo-top-capteurs',
@@ -393,7 +395,7 @@ function DashboardInner({ domaine }) {
       data: topDatasets,
     })
     return out
-  }, [domaine, trafficTopRoads, bikeUsage, accidentsByYear, irveByCommune, busKmByCommune, cyclingByYear, parkingCapacityByCommune, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest])
+  }, [domaine, trafficTopRoads, bikeUsage, accidentsByYear, irveByCommune, busKmByCommune, cyclingByYear, parkingCapacityByCommune, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest, state.filters.from, state.filters.to])
 
   const empty = entries.length === 0
 
