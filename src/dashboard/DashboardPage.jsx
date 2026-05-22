@@ -39,7 +39,10 @@ function DashboardInner({ domaine }) {
       .map((entry) => {
         const ds = datasetStates[entry.id]
         if (!ds || ds.status !== 'pret') return null
-        const features = filterFeatures(ds.dataset.features, state.filters, zoneResolver, entry.dateField)
+        // observationField : seul un sous-ensemble de jeux ont une date « événement »
+        // par feature (ex. accidents) ; pour l'inventaire on n'applique pas le filtre
+        // temporel feature-à-feature pour ne pas vider la carte par effet de bord.
+        const features = filterFeatures(ds.dataset.features, state.filters, zoneResolver, entry.observationField || null)
         return { id: entry.id, libelle: entry.libelle, entry, dataset: ds.dataset, features }
       })
       .filter(Boolean)
@@ -129,6 +132,49 @@ function DashboardInner({ domaine }) {
       .map((d) => ({ ...d, mjo: Math.round(d.mjo), hpm: Math.round(d.hpm), hps: Math.round(d.hps) }))
   }, [activeLayers])
 
+  // Accidents corporels par année et par gravité.
+  const accidentsByYear = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'accidents-corporels')
+    if (!layer || !layer.features.length) return []
+    const GRAV = { 'Indemne': 'indemne', 'Blessé léger': 'leger', 'Blessé hospitalisé': 'hospi', 'Tué': 'tue' }
+    const agg = {}
+    layer.features.forEach((f) => {
+      const an = +f.properties?.an
+      const key = GRAV[f.properties?.grav]
+      if (!an || !key) return
+      if (!agg[an]) agg[an] = { an, indemne: 0, leger: 0, hospi: 0, tue: 0 }
+      agg[an][key] += 1
+    })
+    return Object.values(agg).sort((a, b) => a.an - b.an)
+  }, [activeLayers])
+
+  // Capacité de stationnement par commune (top 15) — somme de np_total / np_pmr / np_2rmot / np_veltot.
+  const parkingCapacityByCommune = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'parkings-hors-voirie')
+    if (!layer || !layer.features.length || !zoneNames.length) return []
+    const acc = {}
+    layer.features.forEach((f) => {
+      const commune = zoneResolver(f)
+      if (!commune) return
+      const p = f.properties || {}
+      const total = Number(p.np_total) || 0
+      const pmr = Number(p.np_pmr) || 0
+      const motot = Number(p.np_2rmot) || 0
+      const velo = Number(p.np_veltot) || 0
+      const standard = Math.max(0, total - pmr - motot - velo)
+      if (!acc[commune]) acc[commune] = { commune, standard: 0, pmr: 0, motot: 0, velo: 0, total: 0 }
+      acc[commune].standard += standard
+      acc[commune].pmr += pmr
+      acc[commune].motot += motot
+      acc[commune].velo += velo
+      acc[commune].total += total
+    })
+    return Object.values(acc)
+      .filter((d) => d.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 15)
+  }, [activeLayers, zoneResolver, zoneNames.length])
+
   // Features par commune (top 12) — point-dans-polygone sur les contours.
   const featuresByZone = useMemo(() => {
     if (!zoneNames.length) return []
@@ -170,6 +216,24 @@ function DashboardInner({ domaine }) {
         type: 'trafic-top-voies',
         data: trafficTopRoads,
       })
+      out.push({
+        key: 'accidents-par-annee',
+        title: '🚨 Accidents corporels par année et gravité',
+        status: accidentsByYear.length === 0 ? 'vide' : 'pret',
+        date: oldest,
+        type: 'accidents-par-annee',
+        data: accidentsByYear,
+      })
+    }
+    if (domaine === 'stationnement') {
+      out.push({
+        key: 'capacite-par-commune',
+        title: '🅿️ Capacité de stationnement par commune (top 15)',
+        status: parkingCapacityByCommune.length === 0 ? 'vide' : 'pret',
+        date: oldest,
+        type: 'capacite-par-commune',
+        data: parkingCapacityByCommune,
+      })
     }
     out.push({
       key: 'features-par-commune',
@@ -198,7 +262,7 @@ function DashboardInner({ domaine }) {
       data: topDatasets,
     })
     return out
-  }, [domaine, trafficTopRoads, bikeUsage, featuresByZone, modeDistribution, topDatasets, oldest])
+  }, [domaine, trafficTopRoads, bikeUsage, accidentsByYear, parkingCapacityByCommune, featuresByZone, modeDistribution, topDatasets, oldest])
 
   const empty = entries.length === 0
 

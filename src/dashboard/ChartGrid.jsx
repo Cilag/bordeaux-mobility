@@ -4,6 +4,8 @@ import ModeDistributionChart from './ModeDistributionChart'
 import FeaturesByZoneChart from './FeaturesByZoneChart'
 import TrafficTopRoadsChart from './TrafficTopRoadsChart'
 import BikeTopLocationsChart from './BikeTopLocationsChart'
+import AccidentsByYearChart from './AccidentsByYearChart'
+import ParkingCapacityByCommuneChart from './ParkingCapacityByCommuneChart'
 
 // charts: [{ key, title, status, date, type, data }]
 export default function ChartGrid({ charts }) {
@@ -16,6 +18,8 @@ export default function ChartGrid({ charts }) {
           {c.type === 'features-par-zone' && <FeaturesByZoneChart data={c.data} />}
           {c.type === 'trafic-top-voies' && <TrafficTopRoadsChart data={c.data} />}
           {c.type === 'velo-top-capteurs' && <BikeTopLocationsChart data={c.data} />}
+          {c.type === 'accidents-par-annee' && <AccidentsByYearChart data={c.data} />}
+          {c.type === 'capacite-par-commune' && <ParkingCapacityByCommuneChart data={c.data} />}
         </ChartCard>
       ))}
     </div>

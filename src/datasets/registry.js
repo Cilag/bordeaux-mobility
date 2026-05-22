@@ -309,14 +309,15 @@ export const REGISTRY = [
   {
     id: 'accidents-corporels',
     domaine: 'mobilite',
-    libelle: 'Accidents corporels 2012-2019',
+    libelle: 'Accidents corporels 2012-2024',
     source: { type: 'opendatasoft', datasetId: 'accidents-corporels-de-la-circulation-sur-bordeaux-metropole-2012-2019' },
     geometrie: 'point',
     mode: ['voiture', 'velo', 'pieton'],
     categorie: 'securite',
     dateField: 'datetime',
+    observationField: 'datetime', // une date par accident (≠ inventaire)
     millesime: null,
-    viz: ['carte', 'kpi-comptage'],
+    viz: ['carte', 'kpi-comptage', 'accidents-par-annee'],
   },
 
   // ---------- Stationnement (couches WFS) ----------
