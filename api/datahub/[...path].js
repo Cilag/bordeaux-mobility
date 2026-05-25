@@ -26,6 +26,8 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60')
     res.send(body)
   } catch (err) {
-    res.status(502).json({ error: 'upstream fetch failed', detail: err.message })
+    // Scrub la clé du message d'erreur au cas où fetch l'a incluse (DNS, abort, etc.).
+    const detail = err.message?.replace(key, '[redacted]') ?? 'unknown error'
+    res.status(502).json({ error: 'upstream fetch failed', detail })
   }
 }
