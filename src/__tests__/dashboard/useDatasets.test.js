@@ -32,4 +32,20 @@ describe('useDatasets', () => {
     await waitFor(() => expect(result.current.a.status).toBe('erreur'))
     expect(result.current.b.status).toBe('pret')
   })
+
+  it('propagates degraded:true from loadDataset to the state', async () => {
+    loader.loadDataset.mockResolvedValue({ features: [], degraded: true })
+    const entries = [{ id: 'a', libelle: 'A', dateField: null }]
+    const { result } = renderHook(() => useDatasets(entries))
+    await waitFor(() => expect(result.current.a.status).toBe('pret'))
+    expect(result.current.a.degraded).toBe(true)
+  })
+
+  it('defaults degraded to false when loadDataset does not set it', async () => {
+    loader.loadDataset.mockResolvedValue({ features: [] })
+    const entries = [{ id: 'a', libelle: 'A', dateField: null }]
+    const { result } = renderHook(() => useDatasets(entries))
+    await waitFor(() => expect(result.current.a.status).toBe('pret'))
+    expect(result.current.a.degraded).toBe(false)
+  })
 })
