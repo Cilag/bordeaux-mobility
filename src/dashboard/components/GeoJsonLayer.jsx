@@ -64,10 +64,16 @@ const LABELS = {
   num_acc: "N° d'accident", num_veh: 'N° de véhicule',
   // Voirie / réseau
   typamena: "Type d'aménagement",
-  nature_n1: 'Nature', nature_n2: 'Sous-nature',
   alias_nature_n1: 'Type', alias_nature_n2: 'Détail',
   type_emprise: "Type d'emprise", localisation_emprise: "Emprise",
   zone: 'Zone',
+  // VCub
+  nbvelos: 'Vélos disponibles', nbplaces: 'Places libres',
+  nbelec: 'Vélos électriques', nbclassiq: 'Vélos classiques',
+  // Arrêts / SAEIV
+  vehicule: 'Mode de transport',
+  // Arceaux et autres dénombrements
+  typologie: 'Typologie', nombre: 'Nombre',
 }
 
 // Champs purement techniques — masqués dans la popup.
@@ -77,6 +83,11 @@ const HIDDEN_FIELDS = new Set([
   'geom_o', 'geom_err', 'geom',
   'reg_code', 'reg_name', 'dep_code', 'dep_name', 'epci_code', 'epci_name', 'com_name',
   'year_georef', 'dep', 'com', 'mois', 'jour', 'hrmn',
+  // Codes redondants (les alias_* sont déjà affichés en clair)
+  'nature_n1', 'nature_n2',
+  // Identifiants techniques internes
+  'numordre', 'groupe', 'source', 'actif',
+  // Identifiant interne du jeu (déjà partiellement couvert par 'ident' mais souvent inutile)
 ])
 
 // Champs date prioritaires (affichés en premier).
