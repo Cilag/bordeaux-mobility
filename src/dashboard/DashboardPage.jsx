@@ -122,48 +122,6 @@ function DashboardInner({ domaine }) {
       .slice(0, 10)
   }, [activeLayers])
 
-  // Top voies les plus fréquentées — basé sur le comptage du trafic (mjo_val).
-  // Agrège par nom de voie (les capteurs des 2 sens partagent souvent le même nom).
-  const trafficTopRoads = useMemo(() => {
-    const comptage = activeLayers.find((l) => l.id === 'comptage-trafic')
-    if (!comptage) return []
-    const agg = {}
-    comptage.features.forEach((f) => {
-      const name = f.properties?.nom_voie
-      const mjo = f.properties?.mjo_val
-      if (!name || typeof mjo !== 'number') return
-      if (!agg[name]) agg[name] = { nom_voie: name, mjo: 0, hpm: 0, hps: 0 }
-      agg[name].mjo += mjo
-      agg[name].hpm += f.properties?.hpm_val || 0
-      agg[name].hps += f.properties?.hps_val || 0
-    })
-    return Object.values(agg)
-      .sort((a, b) => b.mjo - a.mjo)
-      .slice(0, 15)
-      .map((d) => ({ ...d, mjo: Math.round(d.mjo), hpm: Math.round(d.hpm), hps: Math.round(d.hps) }))
-  }, [activeLayers])
-
-  // Heures de pointe matin (hpm_val) et soir (hps_val) pour les voies les plus chargées.
-  const peakHoursByRoad = useMemo(() => {
-    const layer = activeLayers.find((l) => l.id === 'comptage-trafic')
-    if (!layer || !layer.features.length) return []
-    const agg = {}
-    layer.features.forEach((f) => {
-      const name = f.properties?.nom_voie
-      const hpm = Number(f.properties?.hpm_val) || 0
-      const hps = Number(f.properties?.hps_val) || 0
-      if (!name || (hpm === 0 && hps === 0)) return
-      if (!agg[name]) agg[name] = { nom_voie: name, hpm: 0, hps: 0 }
-      agg[name].hpm += hpm
-      agg[name].hps += hps
-    })
-    return Object.values(agg)
-      .map((d) => ({ ...d, max: Math.max(d.hpm, d.hps) }))
-      .sort((a, b) => b.max - a.max)
-      .slice(0, 12)
-      .map((d) => ({ nom_voie: d.nom_voie, hpm: Math.round(d.hpm), hps: Math.round(d.hps) }))
-  }, [activeLayers])
-
   // Densité d'aménagements cyclables par commune (en km).
   const cyclingKmByCommune = useMemo(() => {
     const layer = activeLayers.find((l) => l.id === 'amenagements-cyclables')
@@ -195,48 +153,6 @@ function DashboardInner({ domaine }) {
       .filter((d) => d.capacity > 0)
       .sort((a, b) => b.capacity - a.capacity)
       .slice(0, 15)
-  }, [activeLayers])
-
-  // Accidents par catégorie de véhicule, regroupés en familles lisibles.
-  const accidentsByVehicle = useMemo(() => {
-    const layer = activeLayers.find((l) => l.id === 'accidents-corporels')
-    if (!layer || !layer.features.length) return []
-    const FAMILIES = [
-      { name: 'Voiture', color: '#1E3A5F', match: /^(VL seul|VU seul|Voiturette|Autre v)/i },
-      { name: '2-roues motorisés', color: '#C0772A', match: /(motocyclette|scooter|cyclomoteur|3RM|EDP)/i },
-      { name: 'Vélo', color: '#2C8C5C', match: /(bicyclette|VAE)/i },
-      { name: 'Poids lourds', color: '#5C6B7A', match: /(tracteur|^PL )/i },
-      { name: 'Bus / Tram', color: '#7C5DC3', match: /(autobus|tramway)/i },
-    ]
-    const counts = Object.fromEntries(FAMILIES.map((f) => [f.name, 0]))
-    counts['Autre'] = 0
-    layer.features.forEach((f) => {
-      const catv = f.properties?.catv
-      if (!catv) return
-      const family = FAMILIES.find((fam) => fam.match.test(catv))
-      counts[family ? family.name : 'Autre'] += 1
-    })
-    const palette = { ...Object.fromEntries(FAMILIES.map((f) => [f.name, f.color])), 'Autre': '#9AA5B1' }
-    return Object.entries(counts)
-      .filter(([, n]) => n > 0)
-      .map(([categorie, count]) => ({ categorie, count, color: palette[categorie] }))
-      .sort((a, b) => b.count - a.count)
-  }, [activeLayers])
-
-  // Accidents corporels par année et par gravité.
-  const accidentsByYear = useMemo(() => {
-    const layer = activeLayers.find((l) => l.id === 'accidents-corporels')
-    if (!layer || !layer.features.length) return []
-    const GRAV = { 'Indemne': 'indemne', 'Blessé léger': 'leger', 'Blessé hospitalisé': 'hospi', 'Tué': 'tue' }
-    const agg = {}
-    layer.features.forEach((f) => {
-      const an = +f.properties?.an
-      const key = GRAV[f.properties?.grav]
-      if (!an || !key) return
-      if (!agg[an]) agg[an] = { an, indemne: 0, leger: 0, hospi: 0, tue: 0 }
-      agg[an][key] += 1
-    })
-    return Object.values(agg).sort((a, b) => a.an - b.an)
   }, [activeLayers])
 
   // Capacité de stationnement par commune (top 15) — somme de np_total / np_pmr / np_2rmot / np_veltot.
@@ -381,38 +297,6 @@ function DashboardInner({ domaine }) {
     // Diagrammes d'usage par mode — disponibles côté mobilité.
     if (domaine === 'mobilite') {
       out.push({
-        key: 'trafic-top-voies',
-        title: '🚗 Voies les plus fréquentées en voiture — TJM (jour ouvrable)',
-        status: trafficTopRoads.length === 0 ? 'vide' : 'pret',
-        date: dateOf('comptage-trafic'),
-        type: 'trafic-top-voies',
-        data: trafficTopRoads,
-      })
-      out.push({
-        key: 'peak-hours',
-        title: '🕗 Trafic aux heures de pointe — matin vs soir (top 12 voies)',
-        status: peakHoursByRoad.length === 0 ? 'vide' : 'pret',
-        date: dateOf('comptage-trafic'),
-        type: 'peak-hours',
-        data: peakHoursByRoad,
-      })
-      out.push({
-        key: 'accidents-par-annee',
-        title: '🚨 Accidents corporels par année et gravité',
-        status: accidentsByYear.length === 0 ? 'vide' : 'pret',
-        date: dateOf('accidents-corporels'),
-        type: 'accidents-par-annee',
-        data: accidentsByYear,
-      })
-      out.push({
-        key: 'accidents-par-vehicule',
-        title: '🚦 Accidents corporels par catégorie de véhicule',
-        status: accidentsByVehicle.length === 0 ? 'vide' : 'pret',
-        date: dateOf('accidents-corporels'),
-        type: 'accidents-vehicle',
-        data: accidentsByVehicle,
-      })
-      out.push({
         key: 'irve-par-commune',
         title: '⚡ Bornes IRVE par commune (gestion électromobilité)',
         status: irveByCommune.length === 0 ? 'vide' : 'pret',
@@ -510,7 +394,7 @@ function DashboardInner({ domaine }) {
       data: topDatasets,
     })
     return out
-  }, [domaine, trafficTopRoads, accidentsByYear, accidentsByVehicle, peakHoursByRoad, irveByCommune, busKmByCommune, cyclingByYear, cyclingKmByCommune, parkingCapacityByCommune, topParkings, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest, dateOf])
+  }, [domaine, irveByCommune, busKmByCommune, cyclingByYear, cyclingKmByCommune, parkingCapacityByCommune, topParkings, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest, dateOf])
 
   const empty = entries.length === 0
 
