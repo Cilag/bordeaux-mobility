@@ -55,4 +55,17 @@ describe('FilterRail', () => {
     expect(screen.getByTestId('state'))
       .toHaveTextContent('{"categories":[],"disabledIds":[],"modes":[],"zone":null,"annee":null,"from":null,"to":null}')
   })
+
+  it('plie et déplie un groupe au clic sur son en-tête', async () => {
+    renderRail()
+    // Au départ, les checkbox sont visibles.
+    expect(screen.getByLabelText('Arrêts TBM')).toBeInTheDocument()
+    // Cliquer sur l'en-tête du groupe "Réseau de transport".
+    await userEvent.click(screen.getByRole('button', { name: /Réseau de transport/ }))
+    // La checkbox doit avoir disparu du DOM.
+    expect(screen.queryByLabelText('Arrêts TBM')).not.toBeInTheDocument()
+    // Recliquer la fait réapparaître.
+    await userEvent.click(screen.getByRole('button', { name: /Réseau de transport/ }))
+    expect(screen.getByLabelText('Arrêts TBM')).toBeInTheDocument()
+  })
 })

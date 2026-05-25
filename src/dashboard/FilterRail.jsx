@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useDashboard } from './DashboardContext'
 import { THEMES, FALLBACK_THEME, themeForEntry } from './themes'
 
@@ -15,6 +15,15 @@ export default function FilterRail({ options }) {
   const { entries = [], entryCounts = {}, modes = [], zones = [] } = options
   const { filters } = state
   const disabled = filters.disabledIds || []
+  const [collapsed, setCollapsed] = useState(() => new Set())
+  function toggleCollapse(themeId) {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(themeId)) next.delete(themeId)
+      else next.add(themeId)
+      return next
+    })
+  }
 
   // Regroupement des entries par thème (via la catégorie de chaque entry).
   const grouped = useMemo(() => {
@@ -61,32 +70,43 @@ export default function FilterRail({ options }) {
           const allEnabled = g.entries.every((e) => !disabled.includes(e.id))
           return (
             <div key={g.id} className="filter-group">
-              <div className="filter-group-head">
+              <button
+                type="button"
+                className="filter-group-head"
+                onClick={() => toggleCollapse(g.id)}
+                aria-expanded={!collapsed.has(g.id)}
+              >
+                <span className="filter-group-chevron">{collapsed.has(g.id) ? '›' : '⌄'}</span>
                 <span className="filter-group-dot" style={{ background: g.color }} />
                 <span className="filter-group-label">{g.label}</span>
                 <span className="filter-group-count">{g.entries.length}</span>
-                <button
-                  type="button"
-                  className="filter-group-toggle"
-                  onClick={() => toggleTheme(g.entries)}
-                  title={allEnabled ? `Tout désactiver — ${g.label}` : `Tout activer — ${g.label}`}
-                >
-                  {allEnabled ? 'Aucun' : 'Tout'}
-                </button>
-              </div>
-              {g.entries.map((entry) => (
-                <label key={entry.id} className="filter-cat" title={entry.libelle}>
-                  <input
-                    type="checkbox"
-                    checked={isOn(entry.id)}
-                    onChange={() => dispatch({ type: 'TOGGLE_DATASET', value: entry.id })}
-                  />
-                  <span className="filter-cat-name">{entry.libelle}</span>
-                  {entryCounts[entry.id] != null && entryCounts[entry.id] > 0 && (
-                    <span className="filter-cat-count">{entryCounts[entry.id].toLocaleString('fr-FR')}</span>
-                  )}
-                </label>
-              ))}
+              </button>
+              {!collapsed.has(g.id) && (
+                <>
+                  <div className="filter-group-actions">
+                    <button
+                      type="button"
+                      className="filter-group-action"
+                      onClick={() => toggleTheme(g.entries)}
+                    >
+                      {allEnabled ? 'Aucun' : 'Tout'}
+                    </button>
+                  </div>
+                  {g.entries.map((entry) => (
+                    <label key={entry.id} className="filter-cat" title={entry.libelle}>
+                      <input
+                        type="checkbox"
+                        checked={isOn(entry.id)}
+                        onChange={() => dispatch({ type: 'TOGGLE_DATASET', value: entry.id })}
+                      />
+                      <span className="filter-cat-name">{entry.libelle}</span>
+                      {entryCounts[entry.id] != null && entryCounts[entry.id] > 0 && (
+                        <span className="filter-cat-count">{entryCounts[entry.id].toLocaleString('fr-FR')}</span>
+                      )}
+                    </label>
+                  ))}
+                </>
+              )}
             </div>
           )
         })}
