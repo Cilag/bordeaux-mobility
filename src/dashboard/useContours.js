@@ -30,10 +30,17 @@ export function useContours() {
     return [...new Set(features.map((f) => f.properties?.[nameField]).filter(Boolean))].sort()
   }, [features, nameField])
 
-  const resolver = useMemo(
-    () => (nameField ? makeZoneResolver(features, nameField) : () => null),
-    [features, nameField],
-  )
+  const resolver = useMemo(() => {
+    const base = nameField ? makeZoneResolver(features, nameField) : () => null
+    // Priorité au champ `commune` quand il est déjà présent sur la feature :
+    // les données DataHub portent souvent cette information à la source, ce
+    // qui est plus rapide et plus fiable que le point-dans-polygone.
+    return (feature) => {
+      const fromProp = feature?.properties?.commune
+      if (typeof fromProp === 'string' && fromProp.trim() !== '') return fromProp
+      return base(feature)
+    }
+  }, [features, nameField])
 
   return { zones: features, zoneNames, nameField, resolver }
 }

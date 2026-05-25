@@ -314,6 +314,32 @@ export const REGISTRY = [
     viz: ['carte', 'kpi-comptage'],
   },
   {
+    id: 'lignes-commerciales',
+    domaine: 'mobilite',
+    libelle: 'Lignes commerciales TBM',
+    source: { type: 'opendatasoft', datasetId: 'sv_ligne_a' },
+    geometrie: null, // table d'attributs (sans géométrie)
+    mode: ['bus_tram'],
+    categorie: 'reseau-bus',
+    dateField: 'mdate',
+    staticDate: '2026-05-25',
+    millesime: null,
+    viz: ['kpi-comptage'],
+  },
+  {
+    id: 'vitesses-radars',
+    domaine: 'mobilite',
+    libelle: 'Répartition des vitesses (radars pédagogiques)',
+    source: { type: 'opendatasoft', datasetId: 'ci_radar_pedago_repartition_vitesse_a' },
+    geometrie: null, // tabulaire
+    mode: ['voiture'],
+    categorie: 'securite',
+    dateField: 'mdate',
+    staticDate: '2025-02-25',
+    millesime: null,
+    viz: ['kpi-comptage'],
+  },
+  {
     id: 'radars-pedagogiques',
     domaine: 'mobilite',
     libelle: 'Radars pédagogiques',

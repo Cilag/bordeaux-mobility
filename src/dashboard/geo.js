@@ -11,16 +11,26 @@ export function pointInRing(point, ring) {
   return inside
 }
 
-// Point représentatif d'une feature (coordonnée pour Point, premier sommet sinon).
+function ringCentroid(coords) {
+  let sx = 0, sy = 0, n = 0
+  for (const c of coords) {
+    if (Array.isArray(c) && typeof c[0] === 'number') { sx += c[0]; sy += c[1]; n++ }
+  }
+  return n > 0 ? [sx / n, sy / n] : null
+}
+
+// Point représentatif d'une feature : centroïde (moyenne des sommets de l'anneau
+// extérieur). Pour les Polygones / LineStrings, c'est beaucoup plus juste qu'un
+// 1er sommet arbitraire pour attribuer la feature à une commune.
 export function featurePoint(feature) {
   const g = feature?.geometry
   if (!g) return null
   if (g.type === 'Point') return g.coordinates
-  if (g.type === 'MultiPoint') return g.coordinates[0]
-  if (g.type === 'LineString') return g.coordinates[0]
-  if (g.type === 'MultiLineString') return g.coordinates[0]?.[0]
-  if (g.type === 'Polygon') return g.coordinates[0]?.[0]
-  if (g.type === 'MultiPolygon') return g.coordinates[0]?.[0]?.[0]
+  if (g.type === 'MultiPoint') return ringCentroid(g.coordinates)
+  if (g.type === 'LineString') return ringCentroid(g.coordinates)
+  if (g.type === 'MultiLineString') return ringCentroid(g.coordinates.flat())
+  if (g.type === 'Polygon') return ringCentroid(g.coordinates[0])
+  if (g.type === 'MultiPolygon') return ringCentroid(g.coordinates.flatMap((p) => p[0]))
   return null
 }
 
