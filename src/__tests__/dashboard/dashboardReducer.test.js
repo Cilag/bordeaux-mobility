@@ -50,6 +50,13 @@ describe('dashboardReducer', () => {
     expect(s.filters.annee).toBe(2019)
   })
 
+  it('SET_CATEGORIES remplace la liste complète des catégories', () => {
+    const s1 = dashboardReducer(initialState('mobilite'), { type: 'SET_CATEGORIES', value: ['arrets', 'velo'] })
+    expect(s1.filters.categories).toEqual(['arrets', 'velo'])
+    const s2 = dashboardReducer(s1, { type: 'SET_CATEGORIES', value: [] })
+    expect(s2.filters.categories).toEqual([])
+  })
+
   it('RESET_FILTERS clears all filters but keeps the domaine', () => {
     const dirty = {
       domaine: 'stationnement',

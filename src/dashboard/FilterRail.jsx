@@ -39,27 +39,45 @@ export default function FilterRail({ options }) {
       <fieldset>
         <legend>Catégories de données</legend>
         {grouped.length === 0 && <p className="state-msg">Aucune donnée chargée</p>}
-        {grouped.map((g) => (
-          <div key={g.id} className="filter-group">
-            <div className="filter-group-head">
-              <span className="filter-group-dot" style={{ background: g.color }} />
-              <span className="filter-group-label">{g.label}</span>
+        {grouped.map((g) => {
+          const allOn = g.items.every((c) => filters.categories.includes(c))
+          const toggleGroup = () => {
+            const next = allOn
+              ? filters.categories.filter((c) => !g.items.includes(c))
+              : [...new Set([...filters.categories, ...g.items])]
+            dispatch({ type: 'SET_CATEGORIES', value: next })
+          }
+          return (
+            <div key={g.id} className="filter-group">
+              <div className="filter-group-head">
+                <span className="filter-group-dot" style={{ background: g.color }} />
+                <span className="filter-group-label">{g.label}</span>
+                <button
+                  type="button"
+                  className="filter-group-toggle"
+                  onClick={toggleGroup}
+                  title={allOn ? `Désélectionner ${g.label}` : `Tout sélectionner — ${g.label}`}
+                  aria-label={allOn ? `Désélectionner ${g.label}` : `Tout sélectionner — ${g.label}`}
+                >
+                  {allOn ? 'Aucun' : 'Tout'}
+                </button>
+              </div>
+              {g.items.map((c) => (
+                <label key={c} className="filter-cat">
+                  <input
+                    type="checkbox"
+                    checked={filters.categories.includes(c)}
+                    onChange={() => dispatch({ type: 'TOGGLE_CATEGORY', value: c })}
+                  />
+                  <span className="filter-cat-name">{c}</span>
+                  {categoryCounts[c] != null && (
+                    <span className="filter-cat-count">{categoryCounts[c].toLocaleString('fr-FR')}</span>
+                  )}
+                </label>
+              ))}
             </div>
-            {g.items.map((c) => (
-              <label key={c} className="filter-cat">
-                <input
-                  type="checkbox"
-                  checked={filters.categories.includes(c)}
-                  onChange={() => dispatch({ type: 'TOGGLE_CATEGORY', value: c })}
-                />
-                <span className="filter-cat-name">{c}</span>
-                {categoryCounts[c] != null && (
-                  <span className="filter-cat-count">{categoryCounts[c].toLocaleString('fr-FR')}</span>
-                )}
-              </label>
-            ))}
-          </div>
-        ))}
+          )
+        })}
       </fieldset>
 
       <fieldset>

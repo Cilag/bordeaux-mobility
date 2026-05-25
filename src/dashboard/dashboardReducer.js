@@ -21,6 +21,9 @@ export function dashboardReducer(state, action) {
       return { ...state, filters: { ...state.filters, zone: action.value } }
     case 'SET_ANNEE':
       return { ...state, filters: { ...state.filters, annee: action.value } }
+    case 'SET_CATEGORIES':
+      // Remplace la liste complète des catégories sélectionnées.
+      return { ...state, filters: { ...state.filters, categories: action.value } }
     case 'SET_DATE_RANGE':
       return { ...state, filters: { ...state.filters, from: action.from, to: action.to, annee: null } }
     case 'RESET_FILTERS':
