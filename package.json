@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "audit:apis": "node scripts/audit-datahub.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
