@@ -14,6 +14,15 @@ function fakeFetch(body, ok = true, status = 200) {
   })
 }
 
+function seqFetch(...responses) {
+  const mock = vi.fn()
+  responses.forEach((r) => {
+    if (r instanceof Error) mock.mockRejectedValueOnce(r)
+    else mock.mockResolvedValueOnce(r)
+  })
+  return mock
+}
+
 describe('loadDataset', () => {
   beforeEach(() => clearDatasetCache())
 
@@ -45,5 +54,20 @@ describe('loadDataset', () => {
     const fetchImpl = fakeFetch({ features: [] })
     await loadDataset(entry, { fetchImpl })
     expect(fetchImpl.mock.calls[0][0]).toContain('/api/datahub/geojson/features/SV_ARRET_P')
+  })
+
+  it('marks degraded:false when the first attempt succeeds', async () => {
+    const result = await loadDataset(entry, { fetchImpl: fakeFetch({ features: [] }) })
+    expect(result.degraded).toBe(false)
+  })
+
+  it('marks degraded:true when the retry rescues the call', async () => {
+    const fetchImpl = seqFetch(
+      { ok: false, status: 503, json: () => Promise.resolve(null) },
+      { ok: true, status: 200, json: () => Promise.resolve({ features: [{ id: 1 }] }) },
+    )
+    const result = await loadDataset(entry, { fetchImpl })
+    expect(result.degraded).toBe(true)
+    expect(result.features).toHaveLength(1)
   })
 })
