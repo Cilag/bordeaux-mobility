@@ -5,8 +5,20 @@ describe('dashboardReducer', () => {
   it('has an initial state with empty filters', () => {
     expect(initialState('mobilite')).toEqual({
       domaine: 'mobilite',
-      filters: { categories: [], modes: [], zone: null, annee: null, from: null, to: null },
+      filters: { categories: [], disabledIds: [], modes: [], zone: null, annee: null, from: null, to: null },
     })
+  })
+
+  it('TOGGLE_DATASET ajoute puis enlève un id', () => {
+    const s1 = dashboardReducer(initialState('mobilite'), { type: 'TOGGLE_DATASET', value: 'arrets-tbm' })
+    expect(s1.filters.disabledIds).toEqual(['arrets-tbm'])
+    const s2 = dashboardReducer(s1, { type: 'TOGGLE_DATASET', value: 'arrets-tbm' })
+    expect(s2.filters.disabledIds).toEqual([])
+  })
+
+  it('SET_DISABLED_DATASETS remplace la liste', () => {
+    const s = dashboardReducer(initialState('mobilite'), { type: 'SET_DISABLED_DATASETS', value: ['a', 'b'] })
+    expect(s.filters.disabledIds).toEqual(['a', 'b'])
   })
 
   it('SET_DATE_RANGE sets from/to and clears annee', () => {

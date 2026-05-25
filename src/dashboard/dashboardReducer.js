@@ -1,7 +1,8 @@
 export function initialState(domaine) {
   return {
     domaine,
-    filters: { categories: [], modes: [], zone: null, annee: null, from: null, to: null },
+    // disabledIds : liste des id de jeux de données désactivés (par défaut vide = tout affiché)
+    filters: { categories: [], disabledIds: [], modes: [], zone: null, annee: null, from: null, to: null },
   }
 }
 
@@ -24,6 +25,10 @@ export function dashboardReducer(state, action) {
     case 'SET_CATEGORIES':
       // Remplace la liste complète des catégories sélectionnées.
       return { ...state, filters: { ...state.filters, categories: action.value } }
+    case 'TOGGLE_DATASET':
+      return { ...state, filters: { ...state.filters, disabledIds: toggle(state.filters.disabledIds, action.value) } }
+    case 'SET_DISABLED_DATASETS':
+      return { ...state, filters: { ...state.filters, disabledIds: action.value } }
     case 'SET_DATE_RANGE':
       return { ...state, filters: { ...state.filters, from: action.from, to: action.to, annee: null } }
     case 'RESET_FILTERS':

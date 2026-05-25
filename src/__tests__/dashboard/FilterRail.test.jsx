@@ -10,7 +10,11 @@ function StateProbe() {
 }
 
 const options = {
-  categories: ['arrets', 'carrefours'],
+  entries: [
+    { id: 'arrets-tbm', libelle: 'Arrêts TBM', categorie: 'arrets', mode: ['bus_tram'] },
+    { id: 'carrefours-feux', libelle: 'Carrefours à feux', categorie: 'carrefours', mode: ['voiture'] },
+  ],
+  entryCounts: {},
   modes: ['bus_tram', 'voiture'],
   zones: ['Bordeaux', 'Pessac'],
   annees: [2019, 2024],
@@ -26,10 +30,10 @@ function renderRail() {
 }
 
 describe('FilterRail', () => {
-  it('toggles a category checkbox into the state', async () => {
+  it('décocher une case ajoute son id à disabledIds', async () => {
     renderRail()
-    await userEvent.click(screen.getByLabelText('arrets'))
-    expect(screen.getByTestId('state')).toHaveTextContent('"categories":["arrets"]')
+    await userEvent.click(screen.getByLabelText('Arrêts TBM'))
+    expect(screen.getByTestId('state')).toHaveTextContent('"disabledIds":["arrets-tbm"]')
   })
 
   it('toggles a mode checkbox into the state', async () => {
@@ -46,9 +50,9 @@ describe('FilterRail', () => {
 
   it('resets all filters', async () => {
     renderRail()
-    await userEvent.click(screen.getByLabelText('arrets'))
+    await userEvent.click(screen.getByLabelText('Arrêts TBM'))
     await userEvent.click(screen.getByRole('button', { name: /Réinitialiser/ }))
     expect(screen.getByTestId('state'))
-      .toHaveTextContent('{"categories":[],"modes":[],"zone":null,"annee":null,"from":null,"to":null}')
+      .toHaveTextContent('{"categories":[],"disabledIds":[],"modes":[],"zone":null,"annee":null,"from":null,"to":null}')
   })
 })

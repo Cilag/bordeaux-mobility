@@ -218,7 +218,7 @@
 .filter-group { margin: 0.4rem 0 0.65rem; }
 .filter-group-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
 .filter-group-toggle {
-  margin-left: auto;
+  margin-left: 6px;
   font-size: 0.62rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -231,6 +231,15 @@
   color: #5a6b7d;
 }
 .filter-group-toggle:hover { background: #f1f4f7; color: #1e3a5f; border-color: #1e3a5f; }
+.filter-group-count {
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: #5a6b7d;
+  background: #e8eef5;
+  border-radius: 8px;
+  padding: 1px 6px;
+  font-variant-numeric: tabular-nums;
+}
 .filter-group-dot { width: 8px; height: 8px; border-radius: 50%; }
 .filter-group-label {
   font-size: 0.72rem;
