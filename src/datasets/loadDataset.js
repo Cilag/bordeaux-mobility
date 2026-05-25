@@ -1,11 +1,10 @@
 import { fetchWithRetry } from './fetchWithRetry'
 
-const DATAHUB_KEY = import.meta.env.VITE_DATAHUB_API_KEY
 const cache = new Map()
 
 function buildUrl(source) {
   if (source.type === 'datahub-geojson') {
-    return `/api/datahub/geojson/features/${source.datahubId}?key=${DATAHUB_KEY}`
+    return `/api/datahub/geojson/features/${source.datahubId}`
   }
   if (source.type === 'opendatasoft') {
     return `/api/opendata/api/explore/v2.1/catalog/datasets/${source.datasetId}/exports/geojson`
@@ -17,6 +16,8 @@ function buildUrl(source) {
 // fetchImpl est injectable pour les tests.
 // Renvoie { features, degraded } — degraded = true si la 1re tentative a échoué
 // mais qu'un retry a sauvé l'appel.
+// La clé DataHub n'est PAS dans l'URL : elle est ajoutée côté serveur
+// (Vite dev proxy en local, function Vercel en prod).
 export async function loadDataset(entry, { fetchImpl = fetch } = {}) {
   if (cache.has(entry.id)) return cache.get(entry.id)
   const { response, attemptsUsed } = await fetchWithRetry(buildUrl(entry.source), { fetchImpl })

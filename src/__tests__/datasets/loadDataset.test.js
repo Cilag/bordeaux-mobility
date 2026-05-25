@@ -53,7 +53,7 @@ describe('loadDataset', () => {
   it('builds the DataHub GeoJSON url from the datahubId', async () => {
     const fetchImpl = fakeFetch({ features: [] })
     await loadDataset(entry, { fetchImpl })
-    expect(fetchImpl.mock.calls[0][0]).toContain('/api/datahub/geojson/features/SV_ARRET_P')
+    expect(fetchImpl.mock.calls[0][0]).toBe('/api/datahub/geojson/features/SV_ARRET_P')
   })
 
   it('marks degraded:false when the first attempt succeeds', async () => {
