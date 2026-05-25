@@ -402,7 +402,8 @@ function DashboardInner({ domaine }) {
     <div className="dashboard">
       <TopBar domaine={domaine} oldestDate={oldest} />
       <Timeline minYear={TIMELINE_MIN} maxYear={TIMELINE_MAX} />
-      <div className="dashboard-body">
+      <div className="dashboard-top">
+        <FilterRail options={filterOptions} />
         <div className="dashboard-map">
           {empty
             ? <p className="state-msg">Aucune source configurée pour ce domaine.</p>
@@ -413,17 +414,16 @@ function DashboardInner({ domaine }) {
               </>
             )}
         </div>
-        <div className="dashboard-analytics">
-          {empty
-            ? <p className="state-msg">Aucun indicateur disponible.</p>
-            : (
-              <>
-                <KpiRow kpis={kpis} />
-                <ChartGrid charts={charts} />
-              </>
-            )}
-        </div>
-        <FilterRail options={filterOptions} />
+      </div>
+      <div className="dashboard-bottom">
+        {empty
+          ? <p className="state-msg">Aucun indicateur disponible.</p>
+          : (
+            <>
+              <KpiRow kpis={kpis} />
+              <ChartGrid charts={charts} />
+            </>
+          )}
       </div>
     </div>
   )
