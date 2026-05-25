@@ -204,14 +204,24 @@
 }
 .filter-rail-head { display: flex; justify-content: space-between; align-items: center; }
 .filter-rail-head h2 { margin: 0; font-size: 1rem; }
-.filter-rail-head button {
+.filter-rail-reset {
   font-size: 0.72rem;
-  background: none;
-  border: 1px solid #d4d4d8;
+  background: #e8eef5;
+  border: 1px solid #1e3a5f;
   border-radius: 6px;
-  padding: 3px 8px;
+  padding: 4px 10px;
   cursor: pointer;
+  color: #1e3a5f;
+  font-weight: 600;
+}
+.filter-rail-reset:hover { background: #1e3a5f; color: #fff; }
+.filter-rail-status {
+  font-size: 0.72rem;
   color: #5a6b7d;
+  margin: 4px 0 8px;
+  padding: 4px 6px;
+  background: #f1f4f7;
+  border-radius: 6px;
 }
 .filter-rail fieldset { border: 1px solid #e0e0e0; border-radius: 8px; margin: 0.75rem 0; padding: 0.5rem 0.5rem 0.65rem; }
 .filter-rail legend { font-size: 0.72rem; color: #5a6b7d; padding: 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -258,8 +268,9 @@
   color: #5a6b7d;
   background: #e8eef5;
   border-radius: 8px;
-  padding: 1px 6px;
+  padding: 1px 8px;
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 .filter-group-dot { width: 8px; height: 8px; border-radius: 50%; }
 .filter-group-label {
@@ -278,8 +289,8 @@
 }
 .filter-cat-name { flex: 1; }
 .filter-cat-count {
-  font-size: 0.7rem;
-  color: #5a6b7d;
+  font-size: 0.68rem;
+  color: #9aa5b1;
   font-variant-numeric: tabular-nums;
 }
 .filter-mode { padding-left: 4px; }

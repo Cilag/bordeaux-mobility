@@ -41,15 +41,6 @@ export default function FilterRail({ options }) {
     return out
   }, [entries])
 
-  function toggleTheme(themeEntries) {
-    const ids = themeEntries.map((e) => e.id)
-    const allEnabled = ids.every((id) => !disabled.includes(id))
-    const next = allEnabled
-      ? [...new Set([...disabled, ...ids])]            // tout désactiver
-      : disabled.filter((id) => !ids.includes(id))     // tout réactiver
-    dispatch({ type: 'SET_DISABLED_DATASETS', value: next })
-  }
-
   function isOn(id) {
     return !disabled.includes(id)
   }
@@ -58,16 +49,19 @@ export default function FilterRail({ options }) {
     <aside className="filter-rail">
       <div className="filter-rail-head">
         <h2>Filtres</h2>
-        <button type="button" onClick={() => dispatch({ type: 'RESET_FILTERS' })}>
+        <button type="button" className="filter-rail-reset" onClick={() => dispatch({ type: 'RESET_FILTERS' })}>
           Réinitialiser
         </button>
+      </div>
+      <div className="filter-rail-status">
+        {entries.length - disabled.length} jeux affichés sur {entries.length}
       </div>
 
       <fieldset>
         <legend>Jeux de données ({entries.length})</legend>
         {grouped.length === 0 && <p className="state-msg">Aucun jeu de données</p>}
         {grouped.map((g) => {
-          const allEnabled = g.entries.every((e) => !disabled.includes(e.id))
+          const activeCount = g.entries.filter((e) => !disabled.includes(e.id)).length
           return (
             <div key={g.id} className="filter-group">
               <button
@@ -76,10 +70,10 @@ export default function FilterRail({ options }) {
                 onClick={() => toggleCollapse(g.id)}
                 aria-expanded={!collapsed.has(g.id)}
               >
-                <span className="filter-group-chevron">{collapsed.has(g.id) ? '›' : '⌄'}</span>
+                <span className="filter-group-chevron">{collapsed.has(g.id) ? '▸' : '▾'}</span>
                 <span className="filter-group-dot" style={{ background: g.color }} />
                 <span className="filter-group-label">{g.label}</span>
-                <span className="filter-group-count">{g.entries.length}</span>
+                <span className="filter-group-count">{activeCount} / {g.entries.length}</span>
               </button>
               {!collapsed.has(g.id) && (
                 <>
@@ -87,9 +81,26 @@ export default function FilterRail({ options }) {
                     <button
                       type="button"
                       className="filter-group-action"
-                      onClick={() => toggleTheme(g.entries)}
+                      onClick={() =>
+                        dispatch({
+                          type: 'SET_DISABLED_DATASETS',
+                          value: disabled.filter((id) => !g.entries.map((e) => e.id).includes(id)),
+                        })
+                      }
                     >
-                      {allEnabled ? 'Aucun' : 'Tout'}
+                      Tout
+                    </button>
+                    <button
+                      type="button"
+                      className="filter-group-action"
+                      onClick={() =>
+                        dispatch({
+                          type: 'SET_DISABLED_DATASETS',
+                          value: [...new Set([...disabled, ...g.entries.map((e) => e.id)])],
+                        })
+                      }
+                    >
+                      Aucun
                     </button>
                   </div>
                   {g.entries.map((entry) => (
