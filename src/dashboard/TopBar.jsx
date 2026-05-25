@@ -21,7 +21,6 @@ export default function TopBar({ domaine, oldestDate }) {
       <span className="topbar-freshness">
         Données les plus anciennes : {formatFreshness(oldestDate)}
       </span>
-      <Link to="/live" className="live-link">Mode Live →</Link>
     </header>
   )
 }

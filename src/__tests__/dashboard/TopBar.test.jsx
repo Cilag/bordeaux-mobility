@@ -24,11 +24,6 @@ describe('TopBar', () => {
       .toHaveAttribute('href', '/dashboard/stationnement')
   })
 
-  it('links to the live mode', () => {
-    renderBar()
-    expect(screen.getByRole('link', { name: /Mode Live/ })).toHaveAttribute('href', '/live')
-  })
-
   it('shows the oldest data date', () => {
     renderBar()
     expect(screen.getByText(/01\/03\/2024/)).toBeInTheDocument()

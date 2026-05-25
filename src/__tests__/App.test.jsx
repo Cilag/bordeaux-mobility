@@ -3,8 +3,6 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from '../App'
 
-// Le mode live monte des cartes Leaflet et lance des fetch réseau : on le mocke.
-vi.mock('../live/LivePage', () => ({ default: () => <div>LIVE MODE</div> }))
 // DashboardPage est lourd (carte + chargement) : on le mocke pour tester le routage seul.
 vi.mock('../dashboard/DashboardPage', () => ({
   default: () => <div>DASHBOARD</div>,
@@ -21,8 +19,8 @@ describe('App routing', () => {
     expect(screen.getByText('DASHBOARD')).toBeInTheDocument()
   })
 
-  it('renders the live page for /live', () => {
+  it('catches unknown routes and redirects to mobilité', () => {
     render(<MemoryRouter initialEntries={['/live']}><App /></MemoryRouter>)
-    expect(screen.getByText('LIVE MODE')).toBeInTheDocument()
+    expect(screen.getByText('DASHBOARD')).toBeInTheDocument()
   })
 })

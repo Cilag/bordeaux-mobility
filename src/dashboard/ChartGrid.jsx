@@ -9,6 +9,8 @@ import ParkingCapacityByCommuneChart from './ParkingCapacityByCommuneChart'
 import HorizontalBarChart from './HorizontalBarChart'
 import CyclingByYearChart from './CyclingByYearChart'
 import SupplyDemandChart from './SupplyDemandChart'
+import PeakHoursChart from './PeakHoursChart'
+import AccidentsByVehicleChart from './AccidentsByVehicleChart'
 
 // charts: [{ key, title, status, date, type, data }]
 export default function ChartGrid({ charts }) {
@@ -26,6 +28,8 @@ export default function ChartGrid({ charts }) {
           {c.type === 'horizontal-bar' && <HorizontalBarChart data={c.data} {...c.props} />}
           {c.type === 'cycling-by-year' && <CyclingByYearChart data={c.data} />}
           {c.type === 'supply-demand' && <SupplyDemandChart data={c.data} />}
+          {c.type === 'peak-hours' && <PeakHoursChart data={c.data} />}
+          {c.type === 'accidents-vehicle' && <AccidentsByVehicleChart data={c.data} />}
         </ChartCard>
       ))}
     </div>

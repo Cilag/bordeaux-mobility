@@ -148,6 +148,86 @@ function DashboardInner({ domaine }) {
       .map((d) => ({ ...d, mjo: Math.round(d.mjo), hpm: Math.round(d.hpm), hps: Math.round(d.hps) }))
   }, [activeLayers])
 
+  // Heures de pointe matin (hpm_val) et soir (hps_val) pour les voies les plus chargées.
+  const peakHoursByRoad = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'comptage-trafic')
+    if (!layer || !layer.features.length) return []
+    const agg = {}
+    layer.features.forEach((f) => {
+      const name = f.properties?.nom_voie
+      const hpm = Number(f.properties?.hpm_val) || 0
+      const hps = Number(f.properties?.hps_val) || 0
+      if (!name || (hpm === 0 && hps === 0)) return
+      if (!agg[name]) agg[name] = { nom_voie: name, hpm: 0, hps: 0 }
+      agg[name].hpm += hpm
+      agg[name].hps += hps
+    })
+    return Object.values(agg)
+      .map((d) => ({ ...d, max: Math.max(d.hpm, d.hps) }))
+      .sort((a, b) => b.max - a.max)
+      .slice(0, 12)
+      .map((d) => ({ nom_voie: d.nom_voie, hpm: Math.round(d.hpm), hps: Math.round(d.hps) }))
+  }, [activeLayers])
+
+  // Densité d'aménagements cyclables par commune (en km).
+  const cyclingKmByCommune = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'amenagements-cyclables')
+    if (!layer || !zoneNames.length) return []
+    const acc = {}
+    layer.features.forEach((f) => {
+      const km = featureLengthKm(f)
+      if (km === 0) return
+      // Si la feature a déjà une commune en propriété, on l'utilise ; sinon resolver.
+      const commune = f.properties?.commune || zoneResolver(f)
+      if (!commune) return
+      acc[commune] = (acc[commune] || 0) + km
+    })
+    return Object.entries(acc)
+      .map(([commune, km]) => ({ commune, km: +km.toFixed(2) }))
+      .sort((a, b) => b.km - a.km)
+      .slice(0, 15)
+  }, [activeLayers, zoneResolver, zoneNames.length])
+
+  // Top parkings individuels par capacité.
+  const topParkings = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'parkings-hors-voirie')
+    if (!layer || !layer.features.length) return []
+    return layer.features
+      .map((f) => ({
+        nom: f.properties?.nom || f.properties?.ident || '—',
+        capacity: Number(f.properties?.np_total) || 0,
+      }))
+      .filter((d) => d.capacity > 0)
+      .sort((a, b) => b.capacity - a.capacity)
+      .slice(0, 15)
+  }, [activeLayers])
+
+  // Accidents par catégorie de véhicule, regroupés en familles lisibles.
+  const accidentsByVehicle = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'accidents-corporels')
+    if (!layer || !layer.features.length) return []
+    const FAMILIES = [
+      { name: 'Voiture', color: '#1E3A5F', match: /^(VL seul|VU seul|Voiturette|Autre v)/i },
+      { name: '2-roues motorisés', color: '#C0772A', match: /(motocyclette|scooter|cyclomoteur|3RM|EDP)/i },
+      { name: 'Vélo', color: '#2C8C5C', match: /(bicyclette|VAE)/i },
+      { name: 'Poids lourds', color: '#5C6B7A', match: /(tracteur|^PL )/i },
+      { name: 'Bus / Tram', color: '#7C5DC3', match: /(autobus|tramway)/i },
+    ]
+    const counts = Object.fromEntries(FAMILIES.map((f) => [f.name, 0]))
+    counts['Autre'] = 0
+    layer.features.forEach((f) => {
+      const catv = f.properties?.catv
+      if (!catv) return
+      const family = FAMILIES.find((fam) => fam.match.test(catv))
+      counts[family ? family.name : 'Autre'] += 1
+    })
+    const palette = { ...Object.fromEntries(FAMILIES.map((f) => [f.name, f.color])), 'Autre': '#9AA5B1' }
+    return Object.entries(counts)
+      .filter(([, n]) => n > 0)
+      .map(([categorie, count]) => ({ categorie, count, color: palette[categorie] }))
+      .sort((a, b) => b.count - a.count)
+  }, [activeLayers])
+
   // Accidents corporels par année et par gravité.
   const accidentsByYear = useMemo(() => {
     const layer = activeLayers.find((l) => l.id === 'accidents-corporels')
@@ -324,12 +404,28 @@ function DashboardInner({ domaine }) {
         data: trafficTopRoads,
       })
       out.push({
+        key: 'peak-hours',
+        title: '🕗 Trafic aux heures de pointe — matin vs soir (top 12 voies)',
+        status: peakHoursByRoad.length === 0 ? 'vide' : 'pret',
+        date: dateOf('comptage-trafic'),
+        type: 'peak-hours',
+        data: peakHoursByRoad,
+      })
+      out.push({
         key: 'accidents-par-annee',
         title: '🚨 Accidents corporels par année et gravité',
         status: accidentsByYear.length === 0 ? 'vide' : 'pret',
         date: dateOf('accidents-corporels'),
         type: 'accidents-par-annee',
         data: accidentsByYear,
+      })
+      out.push({
+        key: 'accidents-par-vehicule',
+        title: '🚦 Accidents corporels par catégorie de véhicule',
+        status: accidentsByVehicle.length === 0 ? 'vide' : 'pret',
+        date: dateOf('accidents-corporels'),
+        type: 'accidents-vehicle',
+        data: accidentsByVehicle,
       })
       out.push({
         key: 'irve-par-commune',
@@ -360,6 +456,18 @@ function DashboardInner({ domaine }) {
         type: 'cycling-by-year',
         data: cyclingByYear,
       })
+      out.push({
+        key: 'amenagements-km-par-commune',
+        title: '🚲 Km d\'aménagements cyclables par commune',
+        status: cyclingKmByCommune.length === 0 ? 'vide' : 'pret',
+        date: dateOf('amenagements-cyclables'),
+        type: 'horizontal-bar',
+        data: cyclingKmByCommune,
+        props: {
+          labelKey: 'commune', valueKey: 'km', color: '#2C8C5C', valueLabel: 'km',
+          formatter: (v) => `${v.toFixed(1)} km`,
+        },
+      })
     }
     if (domaine === 'stationnement') {
       out.push({
@@ -369,6 +477,17 @@ function DashboardInner({ domaine }) {
         date: dateOf('parkings-hors-voirie'),
         type: 'capacite-par-commune',
         data: parkingCapacityByCommune,
+      })
+      out.push({
+        key: 'top-parkings',
+        title: '🅿️ Top parkings par capacité',
+        status: topParkings.length === 0 ? 'vide' : 'pret',
+        date: dateOf('parkings-hors-voirie'),
+        type: 'horizontal-bar',
+        data: topParkings,
+        props: {
+          labelKey: 'nom', valueKey: 'capacity', color: '#B5651D', valueLabel: 'places',
+        },
       })
       out.push({
         key: 'offre-demande',
@@ -406,7 +525,7 @@ function DashboardInner({ domaine }) {
       data: topDatasets,
     })
     return out
-  }, [domaine, trafficTopRoads, bikeUsage, accidentsByYear, irveByCommune, busKmByCommune, cyclingByYear, parkingCapacityByCommune, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest, state.filters.from, state.filters.to])
+  }, [domaine, trafficTopRoads, bikeUsage, accidentsByYear, accidentsByVehicle, peakHoursByRoad, irveByCommune, busKmByCommune, cyclingByYear, cyclingKmByCommune, parkingCapacityByCommune, topParkings, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest, dateOf, state.filters.from, state.filters.to])
 
   const empty = entries.length === 0
 
