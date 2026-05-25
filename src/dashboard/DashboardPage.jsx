@@ -6,7 +6,6 @@ import { loadDataset } from '../datasets/loadDataset'
 import { DashboardProvider, useDashboard } from './DashboardContext'
 import { useDatasets } from './useDatasets'
 import { useContours } from './useContours'
-import { useBikeUsage } from './useBikeUsage'
 import { featureLengthKm } from './geo'
 import { selectDatasets, filterFeatures } from './filtering'
 import { datasetDate, oldestDate } from './freshness'
@@ -27,8 +26,6 @@ function DashboardInner({ domaine }) {
   const entries = useMemo(() => entriesForDomaine(domaine), [domaine])
   const datasetStates = useDatasets(entries)
   const { zoneNames, resolver: zoneResolver } = useContours()
-  const bikeUsage = useBikeUsage({ from: state.filters.from, to: state.filters.to })
-
   // Carrefours à feux chargés de façon autonome — sert de proxy de "demande"
   // dans le diagramme offre/demande, et reste disponible quand on est sur
   // le domaine Stationnement (où carrefours-feux n'appartient pas).
@@ -73,18 +70,16 @@ function DashboardInner({ domaine }) {
     return { id: entry.id, libelle: entry.libelle, entry, status, count, date }
   }), [entries, datasetStates, activeLayers])
 
-  // Options des filtres + compteurs par catégorie (issus des couches actives).
+  // Options des filtres + compteurs par jeu (issus des couches actives).
   const filterOptions = useMemo(() => {
-    const categories = [...new Set(entries.map((e) => e.categorie))].sort()
     const modes = [...new Set(entries.flatMap((e) => e.mode))].sort()
     const annees = [...new Set(entries.map((e) => e.millesime).filter((m) => m != null))].sort()
     const zones = zoneNames // alimenté par les contours administratifs (FV_COMMU_S)
-    const categoryCounts = {}
+    const entryCounts = {}
     activeLayers.forEach((l) => {
-      const c = l.entry.categorie
-      categoryCounts[c] = (categoryCounts[c] || 0) + l.features.length
+      entryCounts[l.id] = (entryCounts[l.id] || 0) + l.features.length
     })
-    return { categories, modes, annees, zones, categoryCounts }
+    return { entries, entryCounts, modes, annees, zones }
   }, [entries, activeLayers, zoneNames])
 
   // KPIs : indicateurs synthétiques pour ce domaine.
@@ -386,16 +381,6 @@ function DashboardInner({ domaine }) {
     // Diagrammes d'usage par mode — disponibles côté mobilité.
     if (domaine === 'mobilite') {
       out.push({
-        key: 'velo-top-capteurs',
-        title: state.filters.from != null && state.filters.to != null
-          ? `🚲 Lieux les plus fréquentés en vélo — passages ${state.filters.from}-${state.filters.to}`
-          : '🚲 Lieux les plus fréquentés en vélo — passages cumulés (fenêtre 2 ans)',
-        status: bikeUsage.status,
-        date: oldest, // jeu agrégé côté serveur (pc_velo_p), pas dans le registre actif
-        type: 'velo-top-capteurs',
-        data: bikeUsage.items,
-      })
-      out.push({
         key: 'trafic-top-voies',
         title: '🚗 Voies les plus fréquentées en voiture — TJM (jour ouvrable)',
         status: trafficTopRoads.length === 0 ? 'vide' : 'pret',
@@ -525,7 +510,7 @@ function DashboardInner({ domaine }) {
       data: topDatasets,
     })
     return out
-  }, [domaine, trafficTopRoads, bikeUsage, accidentsByYear, accidentsByVehicle, peakHoursByRoad, irveByCommune, busKmByCommune, cyclingByYear, cyclingKmByCommune, parkingCapacityByCommune, topParkings, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest, dateOf, state.filters.from, state.filters.to])
+  }, [domaine, trafficTopRoads, accidentsByYear, accidentsByVehicle, peakHoursByRoad, irveByCommune, busKmByCommune, cyclingByYear, cyclingKmByCommune, parkingCapacityByCommune, topParkings, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest, dateOf])
 
   const empty = entries.length === 0
 
