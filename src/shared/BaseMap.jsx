@@ -1,6 +1,8 @@
 import { MapContainer, TileLayer } from 'react-leaflet'
-import { BORDEAUX_CENTER } from '../services/api'
 import 'leaflet/dist/leaflet.css'
+
+// Centre par défaut de la carte (place de la Bourse, Bordeaux).
+const BORDEAUX_CENTER = [44.8378, -0.5792]
 
 // Conteneur de carte Leaflet réutilisable. Les couches sont passées en children.
 export default function BaseMap({ children, zoom = 12 }) {
