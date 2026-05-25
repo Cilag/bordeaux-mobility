@@ -44,6 +44,9 @@ export default function LayerLegend({ items }) {
                   <span className="layer-name">{it.libelle}</span>
                   <span className="layer-date">MAJ {formatFreshness(it.date)}</span>
                 </div>
+                {it.status === 'pret' && it.degraded && (
+                  <span className="layer-degraded" title="Récupéré après retry" aria-label="Source dégradée">⚠</span>
+                )}
                 <span className="layer-meta">{statusLabel(it)}</span>
               </li>
             )

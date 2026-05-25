@@ -67,7 +67,8 @@ function DashboardInner({ domaine }) {
     const layer = activeLayers.find((l) => l.id === entry.id)
     const count = layer ? layer.features.length : (ds?.dataset?.features?.length ?? 0)
     const date = ds?.dataset ? datasetDate(entry, ds.dataset) : null
-    return { id: entry.id, libelle: entry.libelle, entry, status, count, date }
+    const degraded = ds?.degraded === true
+    return { id: entry.id, libelle: entry.libelle, entry, status, count, date, degraded }
   }), [entries, datasetStates, activeLayers])
 
   // Options des filtres + compteurs par jeu (issus des couches actives).

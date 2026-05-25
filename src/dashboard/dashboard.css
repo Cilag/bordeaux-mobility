@@ -202,6 +202,13 @@
 .layer-erreur .layer-name { color: #aa2e4a; }
 .layer-erreur .layer-meta { color: #aa2e4a; }
 .layer-chargement .layer-meta { color: #9aa5b1; }
+.layer-degraded {
+  color: #E69A2B;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: help;
+  flex-shrink: 0;
+}
 
 /* ----------- Filter rail ----------- */
 .filter-rail {
