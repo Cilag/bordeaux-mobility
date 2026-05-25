@@ -18,6 +18,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/datahub/, ''),
       },
+      '/api/opendata': {
+        target: 'https://opendata.bordeaux-metropole.fr',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/opendata/, ''),
+      },
       '/api/sncf': {
         target: 'https://api.sncf.com',
         changeOrigin: true,
