@@ -5,3 +5,20 @@ html, body, #root {
   width: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
+
+/* Layout de la page /live (LivePage.jsx) — pleine viewport avec sidebar latérale. */
+.app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+}
+
+.map-container {
+  flex: 1;
+  position: relative;
+}
+
+.sidebar-open .map-container {
+  width: calc(100% - 300px);
+}
