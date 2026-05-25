@@ -290,6 +290,17 @@ function DashboardInner({ domaine }) {
     [activeLayers],
   )
 
+  // Date de mise à jour d'un jeu précis (par id) — pour afficher la fraîcheur
+  // dans le diagramme qui dépend de ce jeu en particulier.
+  const dateOf = useMemo(() => {
+    const cache = {}
+    entries.forEach((entry) => {
+      const ds = datasetStates[entry.id]
+      cache[entry.id] = ds?.dataset ? datasetDate(entry, ds.dataset) : null
+    })
+    return (id) => cache[id] ?? null
+  }, [entries, datasetStates])
+
   const charts = useMemo(() => {
     const out = []
     // Diagrammes d'usage par mode — disponibles côté mobilité.
@@ -300,7 +311,7 @@ function DashboardInner({ domaine }) {
           ? `🚲 Lieux les plus fréquentés en vélo — passages ${state.filters.from}-${state.filters.to}`
           : '🚲 Lieux les plus fréquentés en vélo — passages cumulés (fenêtre 2 ans)',
         status: bikeUsage.status,
-        date: oldest,
+        date: oldest, // jeu agrégé côté serveur (pc_velo_p), pas dans le registre actif
         type: 'velo-top-capteurs',
         data: bikeUsage.items,
       })
@@ -308,7 +319,7 @@ function DashboardInner({ domaine }) {
         key: 'trafic-top-voies',
         title: '🚗 Voies les plus fréquentées en voiture — TJM (jour ouvrable)',
         status: trafficTopRoads.length === 0 ? 'vide' : 'pret',
-        date: oldest,
+        date: dateOf('comptage-trafic'),
         type: 'trafic-top-voies',
         data: trafficTopRoads,
       })
@@ -316,7 +327,7 @@ function DashboardInner({ domaine }) {
         key: 'accidents-par-annee',
         title: '🚨 Accidents corporels par année et gravité',
         status: accidentsByYear.length === 0 ? 'vide' : 'pret',
-        date: oldest,
+        date: dateOf('accidents-corporels'),
         type: 'accidents-par-annee',
         data: accidentsByYear,
       })
@@ -324,7 +335,7 @@ function DashboardInner({ domaine }) {
         key: 'irve-par-commune',
         title: '⚡ Bornes IRVE par commune (gestion électromobilité)',
         status: irveByCommune.length === 0 ? 'vide' : 'pret',
-        date: oldest,
+        date: dateOf('irve-bornes') || dateOf('irve-stations'),
         type: 'horizontal-bar',
         data: irveByCommune,
         props: { labelKey: 'commune', valueKey: 'count', color: '#7C5DC3', valueLabel: 'Bornes' },
@@ -333,7 +344,7 @@ function DashboardInner({ domaine }) {
         key: 'bus-km-par-commune',
         title: '🚌 Km de couloirs de bus par commune',
         status: busKmByCommune.length === 0 ? 'vide' : 'pret',
-        date: oldest,
+        date: dateOf('couloirs-bus'),
         type: 'horizontal-bar',
         data: busKmByCommune,
         props: {
@@ -345,7 +356,7 @@ function DashboardInner({ domaine }) {
         key: 'amenagements-par-annee',
         title: '🚲 Évolution des aménagements cyclables par année',
         status: cyclingByYear.length === 0 ? 'vide' : 'pret',
-        date: oldest,
+        date: dateOf('amenagements-cyclables'),
         type: 'cycling-by-year',
         data: cyclingByYear,
       })
@@ -355,7 +366,7 @@ function DashboardInner({ domaine }) {
         key: 'capacite-par-commune',
         title: '🅿️ Capacité de stationnement par commune (top 15)',
         status: parkingCapacityByCommune.length === 0 ? 'vide' : 'pret',
-        date: oldest,
+        date: dateOf('parkings-hors-voirie'),
         type: 'capacite-par-commune',
         data: parkingCapacityByCommune,
       })
@@ -363,7 +374,7 @@ function DashboardInner({ domaine }) {
         key: 'offre-demande',
         title: '⚖️ Offre vs demande de stationnement par commune',
         status: supplyDemand.length === 0 ? 'vide' : 'pret',
-        date: oldest,
+        date: dateOf('parkings-hors-voirie'),
         type: 'supply-demand',
         data: supplyDemand,
       })
