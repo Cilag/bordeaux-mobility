@@ -1,7 +1,6 @@
 // Catalogue déclaratif des jeux de données du dashboard.
-// Identifiants techniques issus du catalogue Bordeaux Métropole
-// (data.bordeaux-metropole.fr pour les couches WFS,
-//  opendata.bordeaux-metropole.fr pour les datasets Opendatasoft).
+// Identifiants techniques issus du DataHub Bordeaux Métropole
+// (data.bordeaux-metropole.fr — couches WFS servies en GeoJSON).
 export const REGISTRY = [
   // ---------- Mobilité (couches WFS — datahub-geojson) ----------
   {
@@ -319,7 +318,7 @@ export const REGISTRY = [
     viz: ['carte', 'kpi-comptage'],
   },
 
-  // ---------- Stationnement (couches WFS) ----------
+  // ---------- Stationnement (couches WFS — datahub-geojson) ----------
   {
     id: 'parkings-hors-voirie',
     domaine: 'stationnement',
