@@ -1,10 +1,20 @@
-// Extrait la date d'un jeu de données depuis le champ déclaré dans le registre.
+// Extrait la date d'un jeu de données.
+// 1) Lit le champ déclaré dans `dateField` sur la première feature ;
+// 2) Si absent / invalide, replie sur `staticDate` du registre (date de
+//    modification figée pour les jeux Opendatasoft sans champ date).
 export function datasetDate(entry, dataset) {
-  if (!entry.dateField) return null
-  const raw = dataset?.features?.[0]?.properties?.[entry.dateField]
-  if (!raw) return null
-  const d = new Date(raw)
-  return isNaN(d.getTime()) ? null : d
+  if (entry?.dateField) {
+    const raw = dataset?.features?.[0]?.properties?.[entry.dateField]
+    if (raw) {
+      const d = new Date(raw)
+      if (!isNaN(d.getTime())) return d
+    }
+  }
+  if (entry?.staticDate) {
+    const d = new Date(entry.staticDate)
+    if (!isNaN(d.getTime())) return d
+  }
+  return null
 }
 
 export function formatFreshness(date) {

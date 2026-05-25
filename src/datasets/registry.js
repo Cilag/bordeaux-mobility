@@ -231,6 +231,7 @@ export const REGISTRY = [
     mode: ['voiture'],
     categorie: 'perturbations',
     dateField: 'mdate',
+    staticDate: '2026-05-25', // catalogue : metas.modified
     observationField: { start: 'date_debut', end: 'date_fin' }, // intervalle d'activité
     millesime: null,
     viz: ['carte', 'kpi-comptage'],
@@ -270,6 +271,7 @@ export const REGISTRY = [
     mode: ['voiture'],
     categorie: 'comptage',
     dateField: 'mdate',
+    staticDate: '2025-02-11', // catalogue : metas.modified
     millesime: 2025,
     viz: ['kpi-comptage', 'diagramme-trafic'],
   },
@@ -294,6 +296,7 @@ export const REGISTRY = [
     mode: ['voiture'],
     categorie: 'irve',
     dateField: 'mdate',
+    staticDate: '2023-09-01', // catalogue : metas.modified
     millesime: null,
     viz: ['carte'],
   },
@@ -306,6 +309,7 @@ export const REGISTRY = [
     mode: ['autopartage'],
     categorie: 'autopartage',
     dateField: 'mdate',
+    staticDate: '2026-05-25', // catalogue : metas.modified (temps réel)
     millesime: null,
     viz: ['carte', 'kpi-comptage'],
   },
@@ -431,6 +435,7 @@ export const REGISTRY = [
     mode: ['voiture'],
     categorie: 'parking-ouvrage',
     dateField: 'mdate',
+    staticDate: '2025-03-05', // catalogue : metas.modified
     millesime: 2025,
     viz: ['carte', 'kpi-comptage'],
   },
@@ -443,6 +448,7 @@ export const REGISTRY = [
     mode: ['voiture'],
     categorie: 'parking-tarifs',
     dateField: 'mdate',
+    staticDate: '2024-12-31', // catalogue : metas.modified
     millesime: 2025,
     viz: ['kpi-comptage'],
   },
