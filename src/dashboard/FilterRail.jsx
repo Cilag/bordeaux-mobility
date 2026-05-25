@@ -54,13 +54,14 @@ export default function FilterRail({ options }) {
         </button>
       </div>
       <div className="filter-rail-status">
-        {entries.length - disabled.length} jeux affichés sur {entries.length}
+        {entries.filter((e) => !disabled.includes(e.id)).length} jeux affichés sur {entries.length}
       </div>
 
       <fieldset>
         <legend>Jeux de données ({entries.length})</legend>
         {grouped.length === 0 && <p className="state-msg">Aucun jeu de données</p>}
         {grouped.map((g) => {
+          const groupIds = g.entries.map((e) => e.id)
           const activeCount = g.entries.filter((e) => !disabled.includes(e.id)).length
           return (
             <div key={g.id} className="filter-group">
@@ -84,7 +85,7 @@ export default function FilterRail({ options }) {
                       onClick={() =>
                         dispatch({
                           type: 'SET_DISABLED_DATASETS',
-                          value: disabled.filter((id) => !g.entries.map((e) => e.id).includes(id)),
+                          value: disabled.filter((id) => !groupIds.includes(id)),
                         })
                       }
                     >
@@ -96,7 +97,7 @@ export default function FilterRail({ options }) {
                       onClick={() =>
                         dispatch({
                           type: 'SET_DISABLED_DATASETS',
-                          value: [...new Set([...disabled, ...g.entries.map((e) => e.id)])],
+                          value: [...new Set([...disabled, ...groupIds])],
                         })
                       }
                     >
