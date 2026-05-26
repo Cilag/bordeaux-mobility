@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { loadDataset } from '../datasets/loadDataset'
 import { makeZoneResolver, detectNameField } from './geo'
 
@@ -7,21 +8,14 @@ const CONTOURS_ENTRY = {
   source: { type: 'datahub-geojson', datahubId: 'FV_COMMU_S' },
 }
 
-// Charge les contours des communes de Bordeaux Métropole et fournit :
-// - zones      : la liste de features (Polygon/MultiPolygon)
-// - zoneNames  : la liste triée des noms de communes (pour le filtre)
-// - nameField  : le champ détecté qui porte le nom
-// - resolver   : (feature) => nom de commune | null (point-dans-polygone)
+// Charge les contours des communes de Bordeaux Métropole via useQuery.
+// API inchangée vs. l'ancienne version.
 export function useContours() {
-  const [features, setFeatures] = useState([])
-
-  useEffect(() => {
-    let cancelled = false
-    loadDataset(CONTOURS_ENTRY)
-      .then((ds) => { if (!cancelled) setFeatures(ds.features ?? []) })
-      .catch(() => { if (!cancelled) setFeatures([]) })
-    return () => { cancelled = true }
-  }, [])
+  const { data } = useQuery({
+    queryKey: ['dataset', CONTOURS_ENTRY.id],
+    queryFn: () => loadDataset(CONTOURS_ENTRY),
+  })
+  const features = data?.features ?? []
 
   const nameField = useMemo(() => detectNameField(features), [features])
 
