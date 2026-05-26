@@ -1,3 +1,4 @@
+import { createElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // QueryClient pour tests : pas de retry, pas de gc, pas de stale → comportement déterministe.
@@ -16,8 +17,10 @@ export function createTestQueryClient() {
 
 // Wrapper pour `renderHook` / `render` qui injecte un QueryClientProvider.
 // Usage : renderHook(() => useDatasets(...), { wrapper: wrapWithQueryClient(client) })
+// NB : on utilise React.createElement (et non JSX) pour rester dans un fichier `.js`
+// — oxc/plugin-react ne transforme le JSX que dans les `.jsx`.
 export function wrapWithQueryClient(client) {
   return function Wrapper({ children }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    return createElement(QueryClientProvider, { client }, children)
   }
 }
