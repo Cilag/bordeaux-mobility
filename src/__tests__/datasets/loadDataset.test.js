@@ -6,14 +6,6 @@ const entry = {
   source: { type: 'datahub-geojson', datahubId: 'SV_ARRET_P' },
 }
 
-function mockFetch(body, ok = true, status = 200) {
-  return vi.fn().mockResolvedValue({
-    ok,
-    status,
-    json: () => Promise.resolve(body),
-  })
-}
-
 describe('loadDataset', () => {
   let fetchSpy
   beforeEach(() => {

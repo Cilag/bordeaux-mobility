@@ -36,6 +36,11 @@ export function useDatasets(entries) {
     })),
   })
 
+  // Lecture intentionnelle de la ref pendant le render : queryFn a déjà
+  // incrémenté le compteur de façon synchrone (en cas d'échec) avant que
+  // useQueries ne renvoie l'état "success" courant. La valeur est donc
+  // stable au moment du render.
+  /* eslint-disable react-hooks/refs */
   return Object.fromEntries(entries.map((entry, i) => {
     const r = results[i]
     if (r.isPending) {
@@ -47,4 +52,5 @@ export function useDatasets(entries) {
     const retries = retriesRef.current.get(entry.id) ?? 0
     return [entry.id, { status: 'pret', dataset: r.data, error: null, degraded: retries > 0 }]
   }))
+  /* eslint-enable react-hooks/refs */
 }
