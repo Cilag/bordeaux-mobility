@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useParams, Navigate } from 'react-router-dom'
 import { DOMAINES } from '../datasets/schema'
 import { entriesForDomaine } from '../datasets/registry'
@@ -29,14 +30,15 @@ function DashboardInner({ domaine }) {
   // Carrefours à feux chargés de façon autonome — sert de proxy de "demande"
   // dans le diagramme offre/demande, et reste disponible quand on est sur
   // le domaine Stationnement (où carrefours-feux n'appartient pas).
-  const [carrefoursFeatures, setCarrefoursFeatures] = useState([])
-  useEffect(() => {
-    let cancelled = false
-    loadDataset({ id: 'carrefours-feux', source: { type: 'datahub-geojson', datahubId: 'PC_CARF_P' } })
-      .then((d) => { if (!cancelled) setCarrefoursFeatures(d.features ?? []) })
-      .catch(() => { if (!cancelled) setCarrefoursFeatures([]) })
-    return () => { cancelled = true }
-  }, [])
+  // Carrefours à feux : chargé via useQuery indépendamment du domaine actif.
+  // Sert de proxy de « demande » dans le diagramme offre/demande stationnement.
+  // La queryKey est la même que celle qui sortirait de useDatasets côté mobilité,
+  // donc dedup automatique si les deux usages coexistent.
+  const carrefoursQuery = useQuery({
+    queryKey: ['dataset', 'carrefours-feux'],
+    queryFn: () => loadDataset({ id: 'carrefours-feux', source: { type: 'datahub-geojson', datahubId: 'PC_CARF_P' } }),
+  })
+  const carrefoursFeatures = carrefoursQuery.data?.features ?? []
 
   // Étape 1 : filtres dataset (catégorie + mode + temporel).
   const activeEntries = useMemo(
