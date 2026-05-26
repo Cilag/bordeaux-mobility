@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useRef } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { loadDataset } from '../datasets/loadDataset'
 
@@ -13,12 +13,17 @@ import { loadDataset } from '../datasets/loadDataset'
 // ces champs sur le résultat post-succès. On encapsule donc loadDataset dans un
 // wrapper qui incrémente un compteur de retries dans une ref locale ; après succès,
 // degraded = compteur > 0.
+// retriesRef : Map jamais prunée quand `entries` change — acceptable aujourd'hui
+// car `entries` est stable par domaine (pas de churn d'IDs en pratique).
 export function useDatasets(entries) {
   const retriesRef = useRef(new Map())
 
   const results = useQueries({
     queries: entries.map((entry) => ({
       queryKey: ['dataset', entry.id],
+      // TODO(étape future) : propager `signal` à loadDataset pour annuler les requêtes
+      // en cours quand l'utilisateur navigue. Pour l'instant l'AbortSignal fourni par
+      // TanStack Query est ignoré (loadDataset ne l'accepte pas).
       queryFn: async () => {
         try {
           return await loadDataset(entry)
@@ -31,7 +36,7 @@ export function useDatasets(entries) {
     })),
   })
 
-  return useMemo(() => Object.fromEntries(entries.map((entry, i) => {
+  return Object.fromEntries(entries.map((entry, i) => {
     const r = results[i]
     if (r.isPending) {
       return [entry.id, { status: 'chargement', dataset: null, error: null, degraded: false }]
@@ -41,5 +46,5 @@ export function useDatasets(entries) {
     }
     const retries = retriesRef.current.get(entry.id) ?? 0
     return [entry.id, { status: 'pret', dataset: r.data, error: null, degraded: retries > 0 }]
-  })), [entries, results])
+  }))
 }
