@@ -1,6 +1,7 @@
-import { fetchWithRetry } from './fetchWithRetry'
-
-const cache = new Map()
+// queryFn utilisée par TanStack Query (useQuery / useQueries) pour charger
+// un GeoJSON depuis le proxy /api/datahub ou /api/opendata. Pas de cache
+// propre : TanStack Query s'en charge. Pas de gestion de retry : idem.
+// L'appelant qui veut savoir si un retry a sauvé peut lire query.failureCount.
 
 function buildUrl(source) {
   if (source.type === 'datahub-geojson') {
@@ -12,21 +13,9 @@ function buildUrl(source) {
   throw new Error(`type de source non supporté: ${source.type}`)
 }
 
-// Charge un jeu de données et met le résultat en cache mémoire (clé = entry.id).
-// fetchImpl est injectable pour les tests.
-// Renvoie { features, degraded } — degraded = true si la 1re tentative a échoué
-// mais qu'un retry a sauvé l'appel.
-// La clé DataHub n'est PAS dans l'URL : elle est ajoutée côté serveur
-// (Vite dev proxy en local, function Vercel en prod).
-export async function loadDataset(entry, { fetchImpl = fetch } = {}) {
-  if (cache.has(entry.id)) return cache.get(entry.id)
-  const { response, attemptsUsed } = await fetchWithRetry(buildUrl(entry.source), { fetchImpl })
+export async function loadDataset(entry) {
+  const response = await fetch(buildUrl(entry.source))
+  if (!response.ok) throw new Error(`HTTP ${response.status}`)
   const geojson = await response.json()
-  const result = { features: geojson?.features ?? [], degraded: attemptsUsed > 1 }
-  cache.set(entry.id, result)
-  return result
-}
-
-export function clearDatasetCache() {
-  cache.clear()
+  return { features: geojson?.features ?? [] }
 }

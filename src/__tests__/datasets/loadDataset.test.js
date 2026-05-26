@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { loadDataset, clearDatasetCache } from '../../datasets/loadDataset'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { loadDataset } from '../../datasets/loadDataset'
 
 const entry = {
   id: 'arrets-tbm',
   source: { type: 'datahub-geojson', datahubId: 'SV_ARRET_P' },
 }
 
-function fakeFetch(body, ok = true, status = 200) {
+function mockFetch(body, ok = true, status = 200) {
   return vi.fn().mockResolvedValue({
     ok,
     status,
@@ -14,60 +14,65 @@ function fakeFetch(body, ok = true, status = 200) {
   })
 }
 
-function seqFetch(...responses) {
-  const mock = vi.fn()
-  responses.forEach((r) => {
-    if (r instanceof Error) mock.mockRejectedValueOnce(r)
-    else mock.mockResolvedValueOnce(r)
-  })
-  return mock
-}
-
 describe('loadDataset', () => {
-  beforeEach(() => clearDatasetCache())
+  let fetchSpy
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(globalThis, 'fetch')
+  })
+  afterEach(() => {
+    fetchSpy.mockRestore()
+  })
 
   it('fetches and returns the feature collection', async () => {
-    const fc = { type: 'FeatureCollection', features: [{ id: 1 }, { id: 2 }] }
-    const fetchImpl = fakeFetch(fc)
-    const result = await loadDataset(entry, { fetchImpl })
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ type: 'FeatureCollection', features: [{ id: 1 }, { id: 2 }] }),
+    })
+    const result = await loadDataset(entry)
     expect(result.features).toHaveLength(2)
   })
 
-  it('caches the result — second call does not refetch', async () => {
-    const fetchImpl = fakeFetch({ features: [{ id: 1 }] })
-    await loadDataset(entry, { fetchImpl })
-    await loadDataset(entry, { fetchImpl })
-    expect(fetchImpl).toHaveBeenCalledTimes(1)
-  })
-
   it('returns empty features when the response has none', async () => {
-    const result = await loadDataset(entry, { fetchImpl: fakeFetch({}) })
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({}),
+    })
+    const result = await loadDataset(entry)
     expect(result.features).toEqual([])
   })
 
   it('throws on a non-ok response', async () => {
-    const fetchImpl = fakeFetch(null, false, 503)
-    await expect(loadDataset(entry, { fetchImpl })).rejects.toThrow('HTTP 503')
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: () => Promise.resolve(null),
+    })
+    await expect(loadDataset(entry)).rejects.toThrow('HTTP 503')
   })
 
   it('builds the DataHub GeoJSON url from the datahubId', async () => {
-    const fetchImpl = fakeFetch({ features: [] })
-    await loadDataset(entry, { fetchImpl })
-    expect(fetchImpl.mock.calls[0][0]).toBe('/api/datahub/geojson/features/SV_ARRET_P')
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ features: [] }),
+    })
+    await loadDataset(entry)
+    expect(fetchSpy.mock.calls[0][0]).toBe('/api/datahub/geojson/features/SV_ARRET_P')
   })
 
-  it('marks degraded:false when the first attempt succeeds', async () => {
-    const result = await loadDataset(entry, { fetchImpl: fakeFetch({ features: [] }) })
-    expect(result.degraded).toBe(false)
+  it('builds the opendatasoft url from the datasetId', async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ features: [] }),
+    })
+    await loadDataset({ id: 'x', source: { type: 'opendatasoft', datasetId: 'FOO' } })
+    expect(fetchSpy.mock.calls[0][0]).toContain('/api/opendata/api/explore/v2.1/catalog/datasets/FOO/exports/geojson')
   })
 
-  it('marks degraded:true when the retry rescues the call', async () => {
-    const fetchImpl = seqFetch(
-      { ok: false, status: 503, json: () => Promise.resolve(null) },
-      { ok: true, status: 200, json: () => Promise.resolve({ features: [{ id: 1 }] }) },
-    )
-    const result = await loadDataset(entry, { fetchImpl })
-    expect(result.degraded).toBe(true)
-    expect(result.features).toHaveLength(1)
+  it('throws on an unsupported source type', async () => {
+    await expect(loadDataset({ id: 'x', source: { type: 'bogus' } })).rejects.toThrow('non supporté')
   })
 })
