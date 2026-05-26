@@ -12,6 +12,7 @@
     "audit:apis": "node scripts/audit-datahub.mjs"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.100.14",
     "leaflet": "^1.9.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@tanstack/react-query-devtools": "^5.100.14",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
