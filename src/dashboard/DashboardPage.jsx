@@ -38,7 +38,7 @@ function DashboardInner({ domaine }) {
     queryKey: ['dataset', 'carrefours-feux'],
     queryFn: () => loadDataset({ id: 'carrefours-feux', source: { type: 'datahub-geojson', datahubId: 'PC_CARF_P' } }),
   })
-  const carrefoursFeatures = carrefoursQuery.data?.features ?? []
+  const carrefoursFeatures = useMemo(() => carrefoursQuery.data?.features ?? [], [carrefoursQuery.data])
 
   // Étape 1 : filtres dataset (catégorie + mode + temporel).
   const activeEntries = useMemo(

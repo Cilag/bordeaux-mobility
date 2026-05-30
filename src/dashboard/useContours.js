@@ -11,11 +11,12 @@ const CONTOURS_ENTRY = {
 // Charge les contours des communes de Bordeaux Métropole via useQuery.
 // API inchangée vs. l'ancienne version.
 export function useContours() {
-  const { data } = useQuery({
+  const { data, isPending, isError, error } = useQuery({
     queryKey: ['dataset', CONTOURS_ENTRY.id],
     queryFn: () => loadDataset(CONTOURS_ENTRY),
   })
-  const features = data?.features ?? []
+
+  const features = useMemo(() => data?.features ?? [], [data])
 
   const nameField = useMemo(() => detectNameField(features), [features])
 
@@ -36,5 +37,13 @@ export function useContours() {
     }
   }, [features, nameField])
 
-  return { zones: features, zoneNames, nameField, resolver }
+  return {
+    zones: features,
+    zoneNames,
+    nameField,
+    resolver,
+    isPending,
+    isError,
+    error: isError ? (error?.message ?? 'Erreur de chargement des contours') : null,
+  }
 }

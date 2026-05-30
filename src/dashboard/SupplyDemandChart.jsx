@@ -16,8 +16,7 @@ export default function SupplyDemandChart({ data }) {
         <Tooltip
           cursor={{ fill: '#F1F4F7' }}
           labelStyle={{ color: '#1E3A5F', fontWeight: 600 }}
-          formatter={(v, name, ctx) => {
-            const p = ctx?.payload
+          formatter={(v, name) => {
             if (name === 'offre') return [`${v.toLocaleString('fr-FR')} places`, 'Offre stationnement']
             if (name === 'demande') return [`${v} carrefours`, 'Densité routière (proxy)']
             return [v, name]
