@@ -279,6 +279,64 @@ function DashboardInner({ domaine }) {
       .slice(0, 12)
   }, [activeLayers, zoneResolver, zoneNames.length])
 
+  // Occupation temps réel des parkings (libres / total depuis ST_PARK_P)
+  const parkingOccupancy = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'parkings-hors-voirie')
+    if (!layer || !layer.features.length) return []
+    return layer.features
+      .map((f) => {
+        const p = f.properties || {}
+        const total = Number(p.total) || 0
+        const libres = Number(p.libres) || 0
+        const nom = p.nom || p.ident || '—'
+        if (total <= 0) return null
+        return { nom, libres, total, occupancy: +((total - libres) / total * 100).toFixed(1) }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.occupancy - a.occupancy)
+      .slice(0, 20)
+  }, [activeLayers])
+
+  // Trafic vélo en temps réel par zone (comptage_5m depuis PC_CAPTV_P)
+  const bikeTrafficByZone = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'capteurs-velo')
+    if (!layer || !zoneNames.length) return []
+    const acc = {}
+    layer.features.forEach((f) => {
+      const zone = f.properties?.zone || zoneResolver(f)
+      if (!zone) return
+      const count = Number(f.properties?.comptage_5m) || 0
+      acc[zone] = (acc[zone] || 0) + count
+    })
+    return Object.entries(acc)
+      .map(([zone, count]) => ({ zone, count }))
+      .filter((d) => d.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15)
+  }, [activeLayers, zoneResolver, zoneNames.length])
+
+  // VCub : vélos disponibles vs docks occupés par commune
+  const vcubByCommune = useMemo(() => {
+    const layer = activeLayers.find((l) => l.id === 'vcub-stations')
+    if (!layer || !layer.features.length) return []
+    const acc = {}
+    layer.features.forEach((f) => {
+      const p = f.properties || {}
+      const commune = p.commune || zoneResolver(f)
+      if (!commune) return
+      const nbvelos = Number(p.nbvelos) || 0
+      const nbplaces = Number(p.nbplaces) || 0
+      if (!acc[commune]) acc[commune] = { commune, disponibles: 0, occupes: 0, total: 0 }
+      acc[commune].disponibles += nbvelos
+      acc[commune].occupes += Math.max(0, nbplaces - nbvelos)
+      acc[commune].total += nbplaces
+    })
+    return Object.values(acc)
+      .filter((d) => d.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 15)
+  }, [activeLayers, zoneResolver])
+
   const oldest = useMemo(
     () => oldestDate(activeLayers.map((l) => datasetDate(l.entry, l.dataset))),
     [activeLayers],
@@ -340,6 +398,22 @@ function DashboardInner({ domaine }) {
           formatter: (v) => `${v.toFixed(1)} km`,
         },
       })
+      out.push({
+        key: 'velo-traffic-par-zone',
+        title: '🚲 Trafic vélo en temps réel par zone (capteurs 5 min)',
+        status: bikeTrafficByZone.length === 0 ? 'vide' : 'pret',
+        date: dateOf('capteurs-velo'),
+        type: 'velo-traffic-par-zone',
+        data: bikeTrafficByZone,
+      })
+      out.push({
+        key: 'vcub-par-commune',
+        title: '🚲 VCub — vélos disponibles par commune',
+        status: vcubByCommune.length === 0 ? 'vide' : 'pret',
+        date: dateOf('vcub-stations'),
+        type: 'vcub-occupancy',
+        data: vcubByCommune,
+      })
     }
     if (domaine === 'stationnement') {
       out.push({
@@ -369,6 +443,14 @@ function DashboardInner({ domaine }) {
         type: 'supply-demand',
         data: supplyDemand,
       })
+      out.push({
+        key: 'parking-occupancy',
+        title: '🅿️ Taux d\'occupation des parkings en temps réel',
+        status: parkingOccupancy.length === 0 ? 'vide' : 'pret',
+        date: dateOf('parkings-hors-voirie'),
+        type: 'parking-occupancy',
+        data: parkingOccupancy,
+      })
     }
     out.push({
       key: 'features-par-commune',
@@ -397,7 +479,7 @@ function DashboardInner({ domaine }) {
       data: topDatasets,
     })
     return out
-  }, [domaine, irveByCommune, busKmByCommune, cyclingByYear, cyclingKmByCommune, parkingCapacityByCommune, topParkings, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest, dateOf])
+  }, [domaine, irveByCommune, busKmByCommune, cyclingByYear, cyclingKmByCommune, parkingCapacityByCommune, topParkings, supplyDemand, featuresByZone, modeDistribution, topDatasets, oldest, dateOf, parkingOccupancy, bikeTrafficByZone, vcubByCommune])
 
   const empty = entries.length === 0
 
